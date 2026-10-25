@@ -1,0 +1,263 @@
+{
+  "version": 1,
+  "mode": "group",
+  "title": "Pasta Gang",
+  "period": {
+    "from": "2026-01-01",
+    "to": "2027-01-01"
+  },
+  "people": {
+    "p1": "Alex Chen",
+    "p2": "Sam Rivera",
+    "p3": "Jordan Lee",
+    "p4": "Riley Park",
+    "me": "You"
+  },
+  "volume": {
+    "total": 302,
+    "byPerson": {
+      "p1": 90,
+      "p2": 66,
+      "me": 80,
+      "p3": 60,
+      "p4": 6
+    },
+    "attachmentsByPerson": {
+      "p2": 1
+    }
+  },
+  "timing": {
+    "byMonth": [
+      136,
+      141,
+      25,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "byWeekday": [
+      41,
+      44,
+      46,
+      44,
+      47,
+      40,
+      40
+    ],
+    "byHour": [
+      0,
+      96,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      206,
+      0,
+      0,
+      0
+    ],
+    "longestStreakDays": 61,
+    "longestSilenceDays": 0,
+    "lateNightShareByPerson": {
+      "p1": 0.3333333333333333,
+      "p2": 0,
+      "me": 0,
+      "p3": 1,
+      "p4": 1
+    }
+  },
+  "replies": {
+    "medianReplyMinutesByPerson": {
+      "p2": 4,
+      "me": 10,
+      "p3": 300,
+      "p1": 1,
+      "p4": 5
+    },
+    "repliesByPerson": {
+      "p2": 36,
+      "me": 60,
+      "p3": 60,
+      "p1": 30,
+      "p4": 6
+    }
+  },
+  "starters": {
+    "startsByPerson": {
+      "p1": 60
+    },
+    "doubleTextsByPerson": {
+      "me": 20
+    }
+  },
+  "reactions": {
+    "givenByPerson": {
+      "p2": 61,
+      "me": 31,
+      "p3": 2,
+      "p4": 1,
+      "p1": 1
+    },
+    "receivedByPerson": {
+      "p1": 63,
+      "p3": 30,
+      "me": 3
+    },
+    "laughsReceivedByPerson": {
+      "p1": 63
+    },
+    "byType": {
+      "laugh": 63,
+      "love": 33
+    }
+  },
+  "words": {
+    "topWords": [
+      {
+        "word": "sorry",
+        "count": 120
+      },
+      {
+        "word": "bet",
+        "count": 70
+      },
+      {
+        "word": "omw",
+        "count": 60
+      },
+      {
+        "word": "pasta",
+        "count": 60
+      },
+      {
+        "word": "tonight",
+        "count": 60
+      },
+      {
+        "word": "woke",
+        "count": 60
+      },
+      {
+        "word": "classic",
+        "count": 30
+      },
+      {
+        "word": "jordan",
+        "count": 30
+      },
+      {
+        "word": "lol",
+        "count": 30
+      },
+      {
+        "word": "everyone",
+        "count": 20
+      }
+    ],
+    "topEmoji": [
+      {
+        "emoji": "🍝",
+        "count": 60
+      }
+    ],
+    "signatureWordByPerson": {
+      "p1": "pasta",
+      "p2": "bet",
+      "me": "omw",
+      "p3": "sorry",
+      "p4": "heyyy"
+    },
+    "longestMessage": {
+      "senderId": "p3",
+      "length": 24
+    }
+  },
+  "greatestHits": [
+    {
+      "senderId": "p1",
+      "text": "pasta tonight?",
+      "sentAt": "2026-01-12T20:00:00.000Z",
+      "reactions": 4,
+      "laughs": 4
+    },
+    {
+      "senderId": "me",
+      "text": "omw",
+      "sentAt": "2026-01-25T20:14:00.000Z",
+      "reactions": 3,
+      "laughs": 0
+    }
+  ],
+  "awards": [
+    {
+      "id": "main-character",
+      "title": "Main Character",
+      "personId": "p1",
+      "value": 29.8,
+      "label": "29.8% of all messages"
+    },
+    {
+      "id": "ghost",
+      "title": "The Ghost",
+      "personId": "p3",
+      "value": 300,
+      "label": "median reply 5h 0m"
+    },
+    {
+      "id": "starter",
+      "title": "The Starter",
+      "personId": "p1",
+      "value": 60,
+      "label": "started 60 conversations"
+    },
+    {
+      "id": "comedian",
+      "title": "The Comedian",
+      "personId": "p1",
+      "value": 70,
+      "label": "70 laughs per 100 messages"
+    },
+    {
+      "id": "hype",
+      "title": "Hype Man",
+      "personId": "p2",
+      "value": 61,
+      "label": "gave 61 reactions"
+    },
+    {
+      "id": "night-owl",
+      "title": "Night Owl",
+      "personId": "p3",
+      "value": 100,
+      "label": "100% of messages sent 12–5 AM"
+    },
+    {
+      "id": "double-texter",
+      "title": "Double Texter",
+      "personId": "me",
+      "value": 20,
+      "label": "20 double texts"
+    }
+  ],
+  "topChats": []
+}

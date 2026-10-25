@@ -1,0 +1,48 @@
+:root {
+  --bg: #0b0b12;
+  --card-a: #3b1d8f;
+  --card-b: #d6336c;
+  --fg: #fdfcff;
+  --muted: rgba(253, 252, 255, 0.72);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  min-height: 100dvh;
+  background: var(--bg);
+  color: var(--fg);
+  font: 17px/1.4 -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  display: grid;
+  place-items: center;
+}
+#app { width: min(100vw, calc(100dvh * 9 / 16)); height: min(100dvh, calc(100vw * 16 / 9)); position: relative; cursor: pointer; user-select: none; }
+.slide {
+  position: absolute; inset: 0; padding: 72px 28px 40px;
+  display: flex; flex-direction: column; justify-content: center; gap: 12px;
+  background: linear-gradient(160deg, var(--card-a), var(--card-b));
+  border-radius: 16px; overflow: hidden;
+}
+.landing { cursor: default; }
+.progress { position: absolute; top: 14px; left: 14px; right: 14px; display: flex; gap: 4px; z-index: 1; }
+.progress span { flex: 1; height: 3px; border-radius: 2px; background: rgba(255, 255, 255, 0.3); }
+.progress .done { background: var(--fg); }
+h1 { font-size: 40px; line-height: 1.05; margin: 0; letter-spacing: -0.02em; }
+h2 { font-size: 28px; margin: 0 0 8px; letter-spacing: -0.01em; }
+p { margin: 0; color: var(--muted); }
+.kicker { text-transform: uppercase; letter-spacing: 0.12em; font-size: 13px; font-weight: 600; }
+.big { font-size: 56px; font-weight: 800; color: var(--fg); line-height: 1; }
+.emoji { font-size: 44px; }
+.bars, .words, .signature { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.bars li { display: grid; grid-template-columns: 1fr auto; gap: 4px 10px; }
+.bars .name { font-weight: 600; }
+.bars .value { color: var(--muted); font-variant-numeric: tabular-nums; }
+.bars .bar { grid-column: 1 / -1; height: 8px; border-radius: 4px; background: linear-gradient(90deg, var(--fg) var(--w), rgba(255, 255, 255, 0.18) var(--w)); }
+.hours { display: flex; align-items: flex-end; gap: 3px; height: 120px; }
+.hours span { flex: 1; height: max(var(--h), 2%); background: var(--fg); border-radius: 2px 2px 0 0; opacity: 0.85; }
+.words li { font-size: 24px; font-weight: 700; }
+.words small, .signature { color: var(--muted); font-size: 16px; font-weight: 400; }
+blockquote { margin: 0 0 12px; font-size: 22px; font-weight: 600; }
+cite { display: block; margin-top: 4px; font-size: 14px; font-style: normal; color: var(--muted); }
+.button { align-self: flex-start; margin-top: 12px; padding: 12px 20px; border-radius: 999px; background: var(--fg); color: var(--card-a); font-weight: 700; text-decoration: none; }
+.link { color: var(--fg); }
