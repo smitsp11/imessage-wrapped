@@ -1,0 +1,19 @@
+# dependencies and builds
+node_modules/
+dist/
+
+# generated wraps contain real message data: never commit
+out/
+*.db
+*.db-shm
+*.db-wal
+
+# secrets
+.env
+.env.*
+
+# personal planning notes
+.private/
+
+# OS
+.DS_Store

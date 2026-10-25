@@ -1,0 +1,31 @@
+{
+  "name": "imessage-wrapped",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Spotify Wrapped for your iMessage group chats. Runs locally on your Mac.",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "wrapped": "tsx src/cli.ts",
+    "test": "TZ=UTC vitest run",
+    "typecheck": "tsc --noEmit",
+    "web:dev": "vite web",
+    "web:build": "vite build web",
+    "demo:json": "tsx src/cli.ts demo --out web/public/demo.json",
+    "e2e": "playwright test"
+  },
+  "dependencies": {
+    "better-sqlite3": "^13.0.3"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.64.1",
+    "@types/better-sqlite3": "^9.6.0",
+    "@types/node": "^26.6.5",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.5",
+    "vitest": "^5.0.5"
+  }
+}
