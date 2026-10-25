@@ -73,7 +73,7 @@ const RULES: Rule[] = [
     id: 'comedian', title: 'The Comedian', pick: 'max',
     raw: (p, s) => (s.reactions.laughsReceivedByPerson[p] ?? 0) / (s.volume.byPerson[p] as number),
     threshold: () => COMEDIAN_MIN_PER_100 / 100, display: percent,
-    label: (v) => `${v} laughs per 100 messages`,
+    label: (v) => `${v} ${v === 1 ? 'laugh' : 'laughs'} per 100 messages`,
   },
   {
     id: 'hype', title: 'Hype Man', pick: 'max',

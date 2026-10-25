@@ -58,17 +58,41 @@ describe('pickAwards', () => {
     expect(ids).not.toContain('lurker')
   })
 
-  it('needs the winner to clear a floor', () => {
-    const weak: AwardInputs = {
-      ...inputs,
-      replies: { ...inputs.replies, medianReplyMinutesByPerson: { a: 3, b: 5, c: 30, d: 900 } },
-      timing: { ...inputs.timing, lateNightShareByPerson: { a: 0.05, b: 0.05, c: 0, d: 1 } },
-      starters: { ...inputs.starters, startsByPerson: { b: 2, c: 1 } },
-    }
-    const ids = pickAwards(weak).map((a) => a.id)
-    expect(ids).not.toContain('ghost')
-    expect(ids).not.toContain('night-owl')
-    expect(ids).not.toContain('starter')
+  const ids = (i: AwardInputs) => pickAwards(i).map((a) => a.id)
+
+  it('gives no Ghost when the slowest median is under an hour', () => {
+    const i = { ...inputs, replies: { ...inputs.replies, medianReplyMinutesByPerson: { a: 3, b: 5, c: 30, d: 900 } } }
+    expect(ids(i)).not.toContain('ghost')
+  })
+
+  it('gives no Night Owl when the unique best share is under 10%', () => {
+    const i = { ...inputs, timing: { ...inputs.timing, lateNightShareByPerson: { a: 0.05, b: 0.04, c: 0, d: 1 } } }
+    expect(ids(i)).not.toContain('night-owl')
+  })
+
+  it('gives no Starter when the unique best is under 3', () => {
+    const i = { ...inputs, starters: { ...inputs.starters, startsByPerson: { b: 2, c: 1 } } }
+    expect(ids(i)).not.toContain('starter')
+  })
+
+  it('gives no Hype Man when the unique best is under 3', () => {
+    const i = { ...inputs, reactions: { ...inputs.reactions, givenByPerson: { c: 2, a: 1 } } }
+    expect(ids(i)).not.toContain('hype')
+  })
+
+  it('gives no Double Texter when the unique best is under 3', () => {
+    const i = { ...inputs, starters: { ...inputs.starters, doubleTextsByPerson: { a: 2 } } }
+    expect(ids(i)).not.toContain('double-texter')
+  })
+
+  it('gives no Comedian under 1 laugh per 100 messages', () => {
+    const i = { ...inputs, reactions: { ...inputs.reactions, laughsReceivedByPerson: { a: 1 } } } // 1 of 120 messages
+    expect(ids(i)).not.toContain('comedian')
+  })
+
+  it('says "laugh" for exactly 1 per 100 messages', () => {
+    const i = { ...inputs, reactions: { ...inputs.reactions, laughsReceivedByPerson: { b: 1 } } } // 1 of 100 messages
+    expect(pickAwards(i).find((a) => a.id === 'comedian')?.label).toBe('1 laugh per 100 messages')
   })
 
   it('counts exactly 50 messages as enough, 49 as not', () => {
