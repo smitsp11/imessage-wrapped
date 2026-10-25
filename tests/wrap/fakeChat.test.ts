@@ -1,17 +1,20 @@
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
-import { describe, expect, it } from 'vitest'
+import { beforeAll, describe, expect, it } from 'vitest'
 import { MessagesDb } from '../../src/extract/messagesDb'
 import { normalizeRows } from '../../src/extract/normalize'
 import type { Wrap } from '../../src/types'
-import { makeFakeDb } from '../../fixtures/makeFakeDb'
+import { FAKE_PEOPLE, makeFakeDb } from '../../fixtures/makeFakeDb'
 import { makeFakeWrap } from '../../fixtures/fakeWrap'
 
 const nameOf = (wrap: Wrap, id: string) => wrap.people[id]
 
 describe('the fake "Pasta Gang" chat', () => {
-  const wrap = makeFakeWrap('group')
+  let wrap: Wrap
+  beforeAll(() => {
+    wrap = makeFakeWrap('group')
+  })
 
   it('counts every message', () => {
     expect(wrap.volume.total).toBe(302)
@@ -47,16 +50,29 @@ describe('the fake "Pasta Gang" chat', () => {
 
   it('reports the one message it could not decode', () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'fake-chat-'))
-    const db = MessagesDb.open(makeFakeDb(dir).path)
-    const { undecodable } = normalizeRows(db.messageRows({ from: new Date('2026-01-01'), to: new Date('2027-01-01') }))
-    db.close()
-    fs.rmSync(dir, { recursive: true, force: true })
-    expect(undecodable).toBe(1)
+    try {
+      const db = MessagesDb.open(makeFakeDb(dir).path)
+      try {
+        const { undecodable } = normalizeRows(db.messageRows({ from: new Date('2026-01-01'), to: new Date('2027-01-01') }))
+        expect(undecodable).toBe(1)
+      } finally {
+        db.close()
+      }
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true })
+    }
   })
 
   it('builds a solo wrap with top chats', () => {
     const solo = makeFakeWrap('solo')
     expect(solo.volume.total).toBe(312)
     expect(solo.topChats).toEqual([{ name: 'Pasta Gang', messages: 302 }, { name: 'Alex Chen', messages: 10 }])
+  })
+
+  it('never contains a raw handle, in group or solo', () => {
+    for (const mode of ['group', 'solo'] as const) {
+      const json = JSON.stringify(makeFakeWrap(mode))
+      for (const p of Object.values(FAKE_PEOPLE)) expect(json).not.toContain(p.handle)
+    }
   })
 })

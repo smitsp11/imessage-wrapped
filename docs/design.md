@@ -84,7 +84,7 @@ Reactions are rows in `message` with `associated_message_type` 2000–2006 (adde
 | Reactions | given and received per person and type; most-reacted messages (greatest hits) |
 | Words | top emoji; top words (stopwords removed); each person's signature word (most over-used compared with the rest of the group, by a smoothed log ratio of their rate vs everyone else's); longest message |
 
-Solo mode uses the same functions. "Members" become "me" and "everyone else," and it adds top people and top group chats ranked by volume. In solo mode the word stats use only your own messages.
+Solo mode uses the same functions over all your chats. It keeps you and your top 5 contacts; everyone else is grouped as 'Everyone else'. Word stats and greatest hits use only your own messages, and awards never go to 'Everyone else'.
 
 ## Awards
 

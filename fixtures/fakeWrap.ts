@@ -1,17 +1,18 @@
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
+import { maskHandle } from '../src/format'
 import { MessagesDb } from '../src/extract/messagesDb'
 import { normalizeRows } from '../src/extract/normalize'
 import type { Wrap } from '../src/types'
 import { buildWrap } from '../src/wrap/buildWrap'
 import { FAKE_PEOPLE, makeFakeDb } from './makeFakeDb'
 
-const FROM = new Date(Date.UTC(2026, 0, 1))
-const TO = new Date(Date.UTC(2027, 0, 1))
+const FROM = new Date(2026, 0, 1)
+const TO = new Date(2027, 0, 1)
 
 function fakeName(handle: string): string {
-  return Object.values(FAKE_PEOPLE).find((p) => p.handle === handle)?.name ?? handle
+  return Object.values(FAKE_PEOPLE).find((p) => p.handle === handle)?.name ?? maskHandle(handle)
 }
 
 /** Builds a wrap from a freshly generated fake chat.db. Used by tests and `wrapped demo`. */

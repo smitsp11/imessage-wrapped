@@ -56,6 +56,7 @@ export type Wrap = {
   version: 1
   mode: 'group' | 'solo'
   title: string
+  /** local calendar dates, YYYY-MM-DD */
   period: { from: string; to: string }
   /** short id → display name */
   people: Record<string, string>
