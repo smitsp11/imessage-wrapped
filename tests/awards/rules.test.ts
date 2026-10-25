@@ -22,12 +22,12 @@ describe('pickAwards', () => {
       ['hype', 'c', 80, 'gave 80 reactions'],
       ['night-owl', 'b', 50, '50% of messages sent 12–5 AM'], // d has 100% but only 20 messages
       ['double-texter', 'a', 12, '12 double texts'],
-      ['lurker', 'c', 20, 'only 20% of messages'],
+      // no lurker: c's 20% isn't under half of an even 3-way split (16.7%)
     ])
   })
 
   it('needs enough replies before anyone can be The Ghost', () => {
-    const few: AwardInputs = { ...inputs, replies: { medianReplyMinutesByPerson: { a: 3, c: 600 }, repliesByPerson: { a: 30, c: 9 } } }
+    const few: AwardInputs = { ...inputs, replies: { medianReplyMinutesByPerson: { a: 120, c: 600 }, repliesByPerson: { a: 30, c: 9 } } }
     expect(pickAwards(few).find((a) => a.id === 'ghost')?.personId).toBe('a')
   })
 
@@ -41,5 +41,59 @@ describe('pickAwards', () => {
     expect(ids).not.toContain('starter')
     expect(ids).not.toContain('double-texter')
     expect(ids).not.toContain('lurker')
+    expect(ids).toContain('comedian')
+  })
+
+  it('gives the lurker only to someone under half of an even split, and no main character on a tie', () => {
+    const lurk: AwardInputs = { ...inputs, volume: { total: 650, byPerson: { a: 300, b: 300, c: 50 }, attachmentsByPerson: {} } }
+    const awards = pickAwards(lurk)
+    expect(awards.find((a) => a.id === 'lurker')).toMatchObject({ personId: 'c', value: 7.7, label: 'only 7.7% of messages' })
+    expect(awards.map((a) => a.id)).not.toContain('main-character')
+  })
+
+  it('gives no award when the best number is tied', () => {
+    const tie: AwardInputs = { ...inputs, volume: { total: 300, byPerson: { a: 100, b: 100, c: 100 }, attachmentsByPerson: {} } }
+    const ids = pickAwards(tie).map((a) => a.id)
+    expect(ids).not.toContain('main-character')
+    expect(ids).not.toContain('lurker')
+  })
+
+  it('needs the winner to clear a floor', () => {
+    const weak: AwardInputs = {
+      ...inputs,
+      replies: { ...inputs.replies, medianReplyMinutesByPerson: { a: 3, b: 5, c: 30, d: 900 } },
+      timing: { ...inputs.timing, lateNightShareByPerson: { a: 0.05, b: 0.05, c: 0, d: 1 } },
+      starters: { ...inputs.starters, startsByPerson: { b: 2, c: 1 } },
+    }
+    const ids = pickAwards(weak).map((a) => a.id)
+    expect(ids).not.toContain('ghost')
+    expect(ids).not.toContain('night-owl')
+    expect(ids).not.toContain('starter')
+  })
+
+  it('counts exactly 50 messages as enough, 49 as not', () => {
+    const edge = (n: number): AwardInputs => ({
+      ...inputs,
+      volume: { total: 300, byPerson: { a: 120, b: 100, c: 60, d: n }, attachmentsByPerson: {} },
+    })
+    expect(pickAwards(edge(49)).find((a) => a.id === 'night-owl')?.personId).toBe('b')
+    expect(pickAwards(edge(50)).find((a) => a.id === 'night-owl')?.personId).toBe('d')
+  })
+
+  it('lets exactly 10 replies qualify for The Ghost', () => {
+    const ten: AwardInputs = { ...inputs, replies: { medianReplyMinutesByPerson: { a: 3, c: 600 }, repliesByPerson: { a: 30, c: 10 } } }
+    expect(pickAwards(ten).find((a) => a.id === 'ghost')?.personId).toBe('c')
+  })
+
+  it('allows a lurker with exactly 3 qualifiers', () => {
+    const three: AwardInputs = { ...inputs, volume: { total: 650, byPerson: { a: 300, b: 300, c: 50 }, attachmentsByPerson: {} } }
+    expect(pickAwards(three).map((a) => a.id)).toContain('lurker')
+  })
+
+  it('skips Main Character and Lurker in solo mode', () => {
+    const ids = pickAwards(inputs, 'solo').map((a) => a.id)
+    expect(ids).not.toContain('main-character')
+    expect(ids).not.toContain('lurker')
+    expect(ids).toEqual(['ghost', 'starter', 'comedian', 'hype', 'night-owl', 'double-texter'])
   })
 })

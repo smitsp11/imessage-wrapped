@@ -88,18 +88,20 @@ Solo mode uses the same functions. "Members" become "me" and "everyone else," an
 
 ## Awards
 
-Each award comes from one stat and needs a minimum sample (at least 50 messages from that person in the period) so nobody wins on a handful of texts.
+Each award comes from one stat, compared unrounded. A person needs at least 50 messages in the period to be considered, the winner must be unique (a tie means no award), and the winning number must clear a floor:
 
-| Award | Rule |
-|---|---|
-| Main Character | largest share of messages |
-| The Ghost | slowest median reply |
-| The Starter | most conversation starts |
-| The Comedian | most Haha reactions received per message |
-| Hype Man | most reactions given |
-| Night Owl | highest share sent 12–5 AM |
-| Double Texter | most double texts |
-| The Lurker | smallest share of messages (among people who qualify) |
+| Award | Rule | Floor |
+|---|---|---|
+| Main Character | largest share of messages | none |
+| The Ghost | slowest median reply (at least 10 replies) | 60 min |
+| The Starter | most conversation starts | 3 |
+| The Comedian | most Haha reactions received per message | 1 per 100 messages |
+| Hype Man | most reactions given | 3 |
+| Night Owl | highest share sent 12–5 AM | 10% |
+| Double Texter | most double texts | 3 |
+| The Lurker | smallest share of messages (needs 3+ qualifiers) | under half of an even split |
+
+Solo wraps skip Main Character and The Lurker.
 
 ## Sharing
 
