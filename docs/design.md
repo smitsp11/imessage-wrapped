@@ -47,7 +47,8 @@ src/
 web/                    Vite app: reads a Wrap (from a local file or the link) and plays the slides
 fixtures/
   makeFakeDb.ts         builds a fake chat.db using Apple's real tables, with scripted conversations
-tests/                  vitest, plus one Playwright test for the slides
+tests/                  vitest unit and integration tests
+e2e/                    one Playwright test for the slides
 ```
 
 Classes are used only where something holds state: `MessagesDb` (the database connection) and `ContactBook` (the name lookup). Everything else is a plain function.

@@ -1,12 +1,21 @@
 # dependencies and builds
 node_modules/
 dist/
+.vercel/
+
+# playwright output
+test-results/
+playwright-report/
 
 # generated wraps contain real message data: never commit
 out/
 *.db
 *.db-shm
 *.db-wal
+*.db-journal
+*.sqlite
+*.sqlite-*
+*.abcddb
 
 # secrets
 .env
