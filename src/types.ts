@@ -1,3 +1,11 @@
+import type { Hit } from './stats/greatestHits'
+import type { ReactionStats } from './stats/reactions'
+import type { ReplyStats } from './stats/replies'
+import type { StarterStats } from './stats/starters'
+import type { TimingStats } from './stats/timing'
+import type { VolumeStats } from './stats/volume'
+import type { WordStats } from './stats/words'
+
 export type ReactionType = 'love' | 'like' | 'dislike' | 'laugh' | 'emphasize' | 'question' | 'emoji'
 
 export type Message = {
@@ -42,4 +50,22 @@ export type Award = {
   /** the number behind the award; its unit depends on the award (percent, minutes or a count). `label` is the display text. */
   value: number
   label: string
+}
+
+export type Wrap = {
+  version: 1
+  mode: 'group' | 'solo'
+  title: string
+  period: { from: string; to: string }
+  /** short id → display name */
+  people: Record<string, string>
+  volume: VolumeStats
+  timing: TimingStats
+  replies: ReplyStats
+  starters: StarterStats
+  reactions: ReactionStats
+  words: WordStats
+  greatestHits: Hit[]
+  awards: Award[]
+  topChats: { name: string; messages: number }[]
 }
