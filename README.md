@@ -1,7 +1,5 @@
 # iMessage Wrapped
 
-[![CI](https://github.com/smitsp11/imessage-wrapped/actions/workflows/ci.yml/badge.svg)](https://github.com/smitsp11/imessage-wrapped/actions/workflows/ci.yml)
-
 Spotify Wrapped for your iMessage group chats.
 
 Pick a group chat and get a set of story slides: who talks the most, who ghosts, who starts every conversation, the chat's greatest hits (ranked by the reactions you all already gave), and awards like The Ghost, Night Owl and Double Texter. Then send your friends a link. They tap through it on any phone, no app needed.
