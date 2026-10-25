@@ -82,9 +82,9 @@ Reactions are rows in `message` with `associated_message_type` 2000–2006 (adde
 | Replies | median reply time per person (only replies within 12 h count) |
 | Starters | who sends the first message after a gap of 6 h or more; double texts (2+ in a row with no reply for 10 min) |
 | Reactions | given and received per person and type; most-reacted messages (greatest hits) |
-| Words | top emoji; top words (stopwords removed); each person's signature word (most over-used compared with the rest of the group, by log-odds); longest message |
+| Words | top emoji; top words (stopwords removed); each person's signature word (most over-used compared with the rest of the group, by a smoothed log ratio of their rate vs everyone else's); longest message |
 
-Solo mode uses the same functions. "Members" become "me" and "everyone else," and it adds top people and top group chats ranked by volume.
+Solo mode uses the same functions. "Members" become "me" and "everyone else," and it adds top people and top group chats ranked by volume. In solo mode the word stats use only your own messages.
 
 ## Awards
 
@@ -105,8 +105,8 @@ Each award comes from one stat and needs a minimum sample (at least 50 messages 
 
 The link carries the wrap itself: `https://<site>/#<packed wrap>`. People appear in a wrap as short ids (`me`, `p1`, `p2`…) with display names, never as phone numbers or emails.
 
-1. `wrapped share <file>` prints exactly what will go into the link: names, numbers and each quote.
-2. You confirm (y/n) and can drop any quote first.
+1. `wrapped share <file>` prints exactly what will go into the link: names, numbers, top words, each signature word and each quote.
+2. You confirm (y/n) and can drop any signature word or quote first.
 3. The wrap is compressed (deflate via `CompressionStream`, which both Node and browsers have) and base64url-encoded into the part after `#`.
 4. The static site reads the `#` part in the browser. Browsers never send it to a server, so the host stores nothing.
 

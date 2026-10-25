@@ -6,26 +6,30 @@ export type WordStats = {
   topWords: { word: string; count: number }[]
   topEmoji: { emoji: string; count: number }[]
   signatureWordByPerson: Record<string, string>
-  /** only the length is kept, never the text */
+  /** only the length is kept, never the text; counted in code points, links not counted */
   longestMessage: { senderId: string; length: number } | null
 }
 
 export const TOP_LIMIT = 10
 export const MIN_SIGNATURE_COUNT = 5
 
-const URL = /https?:\/\/\S+/g
-const WORD = /[\p{L}\p{N}']+/gu
-const EMOJI = /\p{Extended_Pictographic}/u
+const LINK = /\b(?:https?:\/\/|www\.)\S+/gi
+// Languages written without spaces (Chinese, Japanese, Thai) stay one token in v1.
+const WORD = /[\p{L}\p{M}\p{N}']+/gu
+// \uFE0F catches keycaps and emoji-style symbols; plain symbols like (c) and (tm) are not emoji.
+const EMOJI = /\p{Emoji_Presentation}|\uFE0F/u
 const graphemes = new Intl.Segmenter('en', { granularity: 'grapheme' })
 
 export function tokenize(text: string): string[] {
-  const words = text.replace(URL, ' ').toLowerCase().match(WORD) ?? []
+  // iPhone text uses curly apostrophes
+  const words = text.replace(LINK, ' ').normalize('NFC').replace(/[\u2018\u2019\u02BC]/g, "'").toLowerCase().match(WORD) ?? []
   return words
     .map((w) => w.replace(/^'+|'+$/g, ''))
     .filter((w) => w.length >= 3 && !/^\d+$/.test(w) && !STOPWORDS.has(w))
 }
 
 export function emojis(text: string): string[] {
+  if (!EMOJI.test(text)) return []
   return [...graphemes.segment(text)].map((s) => s.segment).filter((g) => EMOJI.test(g))
 }
 
@@ -45,7 +49,8 @@ export function wordStats(messages: Message[]): WordStats {
     wordsByPerson.set(m.senderId, personWords)
     for (const emoji of emojis(m.text)) bump(emojiTotals, emoji)
 
-    const length = [...m.text].length
+    const length = [...m.text.replace(LINK, ' ').trim()].length
+    if (length === 0) continue
     if (!longestMessage || length > longestMessage.length) longestMessage = { senderId: m.senderId, length }
   }
 
@@ -69,13 +74,14 @@ function signatureWords(byPerson: Map<string, Map<string, number>>, totals: Map<
   for (const [person, words] of byPerson) {
     const personWords = sum(words)
     const otherWords = allWords - personWords
+    if (otherWords === 0) continue
     let best: { word: string; score: number } | null = null
-    for (const [word, count] of [...words].sort(([a], [b]) => a.localeCompare(b))) {
+    for (const [word, count] of words) {
       if (count < MIN_SIGNATURE_COUNT) continue
       const otherCount = (totals.get(word) ?? 0) - count
       const score =
         Math.log((count + 1) / (personWords + vocabulary)) - Math.log((otherCount + 1) / (otherWords + vocabulary))
-      if (score > 0 && (!best || score > best.score)) best = { word, score }
+      if (score > 0 && (!best || score > best.score || (score === best.score && word < best.word))) best = { word, score }
     }
     if (best) result[person] = best.word
   }
@@ -93,5 +99,5 @@ function sum(counts: Map<string, number>): number {
 }
 
 function top(counts: Map<string, number>): [string, number][] {
-  return [...counts].sort(([a, x], [b, y]) => y - x || a.localeCompare(b)).slice(0, TOP_LIMIT)
+  return [...counts].sort(([a, x], [b, y]) => y - x || (a < b ? -1 : a > b ? 1 : 0)).slice(0, TOP_LIMIT)
 }

@@ -8,4 +8,8 @@ export const STOPWORDS = new Set([
   'okay', 'gonna', 'wanna', 'like', 'know', 'think', 'going', 'here', 'well', 'which', 'their', 'only',
   'very', 'even', 'because', 'want', 'need', 'make', 'see', 'say', 'said', 'way', 'back', 'still', 'thing',
   'things', 'today', 'time', "that's", "can't", 'cant', 'thats', 'lemme', 'u', 'ur',
+  'doesn', "doesn't", 'doesnt', "isn't", 'isnt', "won't", 'wont', "wasn't", 'wasnt', "aren't", 'arent',
+  "haven't", 'havent', "couldn't", 'couldnt', "wouldn't", 'wouldnt', "shouldn't", 'shouldnt', "you're",
+  'youre', "we're", "they're", 'theyre', "let's", 'lets', "what's", 'whats', "there's", 'theres', "he's",
+  "she's", "i'd", "you'll", 'ill', 'ive',
 ])
