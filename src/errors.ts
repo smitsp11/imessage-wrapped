@@ -1,5 +1,10 @@
 /** Errors with a message meant for the person running the CLI. */
-export class WrappedError extends Error {}
+export class WrappedError extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = new.target.name
+  }
+}
 
 export class MissingDatabaseError extends WrappedError {
   constructor(dbPath: string) {

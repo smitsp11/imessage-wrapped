@@ -20,6 +20,7 @@ export type Chat = {
   id: number
   name: string
   isGroup: boolean
+  /** handles of the other members (never includes "me") */
   memberIds: string[]
   messageCount: number
 }
@@ -38,6 +39,7 @@ export type Award = {
   id: AwardId
   title: string
   personId: string
+  /** the number behind the award; its unit depends on the award (percent, minutes or a count). `label` is the display text. */
   value: number
   label: string
 }
