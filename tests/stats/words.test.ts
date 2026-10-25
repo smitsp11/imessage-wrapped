@@ -75,13 +75,23 @@ it('gives no signature word when two people use a word equally', () => {
 
 it('caps top words at 10 with alphabetical tie-break', () => {
   const words = Array.from({ length: 12 }, (_, i) => `w${String.fromCharCode(97 + i)}x`)
-  const stats = wordStats(words.map((w, i) => msg({ senderId: 'alex', sentAt: at(i), text: w })))
+  const stats = wordStats([...words].reverse().map((w, i) => msg({ senderId: 'alex', sentAt: at(i), text: w })))
   expect(stats.topWords.map((w) => w.word)).toEqual(words.slice(0, 10))
+})
+
+it('breaks signature-word ties alphabetically', () => {
+  const messages = [...many('alex', 'zebra', 5), ...many('alex', 'apple', 5, 10), ...many('sam', 'bet', 10, 20)]
+  expect(wordStats(messages).signatureWordByPerson.alex).toBe('apple')
 })
 
 it('skips reactions and messages without text', () => {
   const target = msg({ senderId: 'alex', sentAt: at(0), text: 'pasta' })
-  const stats = wordStats([target, react('sam', target, 'love', at(1)), msg({ senderId: 'sam', sentAt: at(2), text: null })])
+  const stats = wordStats([
+    target,
+    react('sam', target, 'love', at(1)),
+    { ...react('sam', target, 'laugh', at(3)), text: 'pasta' },
+    msg({ senderId: 'sam', sentAt: at(2), text: null }),
+  ])
   expect(stats.topWords).toEqual([{ word: 'pasta', count: 1 }])
   expect(stats.longestMessage).toEqual({ senderId: 'alex', length: 5 })
 })
