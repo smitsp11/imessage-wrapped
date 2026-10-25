@@ -2,6 +2,7 @@
   "name": "imessage-wrapped",
   "version": "0.1.0",
   "private": true,
+  "license": "MIT",
   "type": "module",
   "description": "Spotify Wrapped for your iMessage group chats. Runs locally on your Mac.",
   "engines": {
