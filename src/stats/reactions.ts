@@ -1,0 +1,26 @@
+import type { Message } from '../types'
+import { contentMessages, increment } from './conversation'
+
+export type ReactionStats = {
+  givenByPerson: Record<string, number>
+  receivedByPerson: Record<string, number>
+  laughsReceivedByPerson: Record<string, number>
+  byType: Record<string, number>
+}
+
+export function reactionStats(messages: Message[]): ReactionStats {
+  const senderByGuid = new Map(contentMessages(messages).map((m) => [m.guid, m.senderId]))
+  const stats: ReactionStats = { givenByPerson: {}, receivedByPerson: {}, laughsReceivedByPerson: {}, byType: {} }
+
+  for (const reaction of messages) {
+    if (!reaction.reactionType) continue
+    increment(stats.givenByPerson, reaction.senderId)
+    increment(stats.byType, reaction.reactionType)
+
+    const target = reaction.reactsToGuid ? senderByGuid.get(reaction.reactsToGuid) : undefined
+    if (!target || target === reaction.senderId) continue
+    increment(stats.receivedByPerson, target)
+    if (reaction.reactionType === 'laugh') increment(stats.laughsReceivedByPerson, target)
+  }
+  return stats
+}
