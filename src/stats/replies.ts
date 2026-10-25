@@ -1,7 +1,7 @@
 import type { Message } from '../types'
-import { HOUR, MINUTE, increment, median, threads } from './conversation'
+import { HOUR, MINUTE, median, threads } from './conversation'
 
-/** A message more than 12 hours after the last one isn't a reply, it's a new conversation. */
+/** More than 12 hours later is too late to count as a reply. Replies are timed from the first unanswered message. */
 export const MAX_REPLY_GAP = 12 * HOUR
 
 export type ReplyStats = {
@@ -10,23 +10,24 @@ export type ReplyStats = {
 }
 
 export function replyStats(messages: Message[]): ReplyStats {
-  const gaps: Record<string, number[]> = {}
+  const replyMinutesByPerson: Record<string, number[]> = {}
   for (const thread of threads(messages)) {
+    let turnStart = thread[0] // first message of the current run by one sender
+    if (!turnStart) continue
     for (let i = 1; i < thread.length; i++) {
-      const previous = thread[i - 1]!
       const current = thread[i]!
-      if (current.senderId === previous.senderId) continue
-      const gap = current.sentAt.getTime() - previous.sentAt.getTime()
-      if (gap > MAX_REPLY_GAP) continue
-      ;(gaps[current.senderId] ??= []).push(gap / MINUTE)
+      if (current.senderId === turnStart.senderId) continue
+      const gap = current.sentAt.getTime() - turnStart.sentAt.getTime()
+      if (gap <= MAX_REPLY_GAP) (replyMinutesByPerson[current.senderId] ??= []).push(gap / MINUTE)
+      turnStart = current
     }
   }
 
   const medianReplyMinutesByPerson: Record<string, number> = {}
   const repliesByPerson: Record<string, number> = {}
-  for (const [person, list] of Object.entries(gaps)) {
+  for (const [person, list] of Object.entries(replyMinutesByPerson)) {
     medianReplyMinutesByPerson[person] = Math.round(median(list) * 10) / 10
-    increment(repliesByPerson, person, list.length)
+    repliesByPerson[person] = list.length
   }
   return { medianReplyMinutesByPerson, repliesByPerson }
 }

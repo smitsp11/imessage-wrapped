@@ -3,7 +3,7 @@ import { HOUR, MINUTE, increment, threads } from './conversation'
 
 /** After 6 quiet hours, the next message starts a new conversation. */
 export const NEW_CONVERSATION_GAP = 6 * HOUR
-/** Sending again after 10+ minutes with no reply in between is a double text. */
+/** Sending again after 10+ minutes with no reply in between is a double text. Reactions don't count as an answer. */
 export const DOUBLE_TEXT_GAP = 10 * MINUTE
 
 export type StarterStats = {
@@ -11,6 +11,8 @@ export type StarterStats = {
   doubleTextsByPerson: Record<string, number>
 }
 
+// Double texts live here with conversation starts: both are about who keeps the conversation going.
+// The first message of the period in each chat always counts as a start.
 export function starterStats(messages: Message[]): StarterStats {
   const startsByPerson: Record<string, number> = {}
   const doubleTextsByPerson: Record<string, number> = {}
