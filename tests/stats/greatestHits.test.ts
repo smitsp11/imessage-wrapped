@@ -58,7 +58,7 @@ it('returns nothing for no messages', () => {
 
 it('truncates by whole code points and marks the cut', () => {
   const m = msg({ senderId: 'alex', sentAt: '2026-01-01T10:00:00Z', text: 'a'.repeat(279) + '😂😂' })
-  const [hit] = greatestHits([m, react('sam', m, 'love', at), react('riley', m, 'love', at)])
-  expect(hit.text.isWellFormed()).toBe(true)
-  expect(hit.text).toBe('a'.repeat(279) + '😂…')
+  const text = greatestHits([m, react('sam', m, 'love', at), react('riley', m, 'love', at)])[0]?.text ?? ''
+  expect(() => encodeURIComponent(text)).not.toThrow() // throws on a lone surrogate
+  expect(text).toBe('a'.repeat(279) + '😂…')
 })
