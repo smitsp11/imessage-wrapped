@@ -3,10 +3,10 @@ import type { Message, ReactionType } from '../src/types'
 let nextId = 1
 
 export function msg(partial: Partial<Omit<Message, 'sentAt'>> & { senderId: string; sentAt: string }): Message {
-  const id = nextId++
+  const id = partial.id ?? nextId++
   return {
     id,
-    guid: `guid-${id}`,
+    guid: partial.guid ?? `guid-${id}`,
     chatId: 1,
     text: 'hello',
     isFromMe: partial.senderId === 'me',

@@ -24,7 +24,9 @@ export function increment(counts: Record<string, number>, key: string, by = 1): 
   counts[key] = (counts[key] ?? 0) + by
 }
 
+/** values must be non-empty */
 export function median(values: number[]): number {
+  if (values.length === 0) throw new Error('median of an empty list')
   const sorted = [...values].sort((a, b) => a - b)
   const mid = Math.floor(sorted.length / 2)
   return sorted.length % 2 === 1 ? sorted[mid]! : (sorted[mid - 1]! + sorted[mid]!) / 2

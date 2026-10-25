@@ -2,13 +2,14 @@ import type { Message } from '../types'
 import { DAY, contentMessages, increment } from './conversation'
 
 export type TimingStats = {
-  /** 12 counts, January first (local time) */
+  /** 12 counts, January first (local time); a period is at most one year */
   byMonth: number[]
   /** 7 counts, Sunday first */
   byWeekday: number[]
   /** 24 counts, midnight first */
   byHour: number[]
   longestStreakDays: number
+  /** longest gap between two messages, in whole 24-hour days (rounded down) */
   longestSilenceDays: number
   /** share of each person's messages sent between 12 and 5 AM */
   lateNightShareByPerson: Record<string, number>
