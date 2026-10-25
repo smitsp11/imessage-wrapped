@@ -1,22 +1,24 @@
 import { execFile } from 'node:child_process'
 import fs from 'node:fs'
+import os from 'node:os'
 import path from 'node:path'
 import readline from 'node:readline/promises'
 import { parseArgs } from 'node:util'
 import { makeFakeWrap } from '../fixtures/fakeWrap'
-import { findChat, looksLikeContactInfo, numbersToRemove, slug } from './cliHelpers'
+import { findChat, isYes, looksLikeContactInfo, numbersToRemove, parseYear, slug } from './cliHelpers'
 import { BrokenLinkError, NewerVersionError, WrappedError } from './errors'
 import { ContactBook } from './extract/contactBook'
 import { DEFAULT_CHAT_DB, MessagesDb } from './extract/messagesDb'
 import { normalizeRows } from './extract/normalize'
 import { maskHandle } from './format'
 import { fitToLimit } from './share/pack'
+import type { Hit } from './stats/greatestHits'
 import { parseWrap } from './share/parseWrap'
 import type { Chat, Wrap } from './types'
 import { buildWrap } from './wrap/buildWrap'
 
 /** Where links point. Only the part after "#" carries data, and browsers never send it to the server. */
-const SITE = process.env.WRAPPED_SITE ?? 'http://localhost:5173'
+const SITE = (process.env.WRAPPED_SITE ?? 'http://localhost:5173').replace(/\/+$/, '')
 const OUT_DIR = 'out'
 const LIST_LIMIT = 30
 
@@ -25,19 +27,20 @@ const USAGE = `Usage:
   npm run wrapped -- group <chat id or name> [--year 2026]
   npm run wrapped -- me [--year 2026]
   npm run wrapped -- share out/<file>.json
-  npm run wrapped -- demo [--out file.json]        a fake group chat, no Full Disk Access needed`
+  npm run wrapped -- demo [--out file.json]        a fake group chat, no Full Disk Access needed
+
+Add --db <path> to any command to use a different chat.db (for testing).`
 
 async function main(): Promise<void> {
-  const { positionals, values } = parseArgs({
-    allowPositionals: true,
-    options: { year: { type: 'string' }, db: { type: 'string' }, out: { type: 'string' } },
-  })
+  const { positionals, values } = parseFlags()
   const [command, arg] = positionals
-  const year = values.year ? Number(values.year) : new Date().getFullYear()
-  if (!Number.isInteger(year)) throw new WrappedError(`"${values.year}" isn't a year. Try --year 2026.`)
+  const year = parseYear(values.year)
   const dbPath = values.db ?? DEFAULT_CHAT_DB
 
   switch (command) {
+    case undefined:
+      console.log(USAGE)
+      return
     case 'list':
       return list(dbPath)
     case 'group':
@@ -51,22 +54,38 @@ async function main(): Promise<void> {
     case 'demo':
       return demo(values.out)
     default:
-      console.log(USAGE)
+      throw new WrappedError(`Unknown command "${command}".\n\n${USAGE}`)
   }
 }
 
-/** Opens the database copy, and makes sure the private temp copy is removed however this ends (including Ctrl-C). */
+function parseFlags() {
+  try {
+    return parseArgs({
+      allowPositionals: true,
+      options: { year: { type: 'string' }, db: { type: 'string' }, out: { type: 'string' } },
+    })
+  } catch (err) {
+    throw new WrappedError(`${(err as Error).message}\n\n${USAGE}`)
+  }
+}
+
+const STOP_SIGNALS = ['SIGINT', 'SIGTERM', 'SIGHUP'] as const
+
+/** Opens the database copy, and makes sure the private temp copy is removed however this ends (including Ctrl-C or a closed terminal). */
 async function withDb<T>(dbPath: string, fn: (db: MessagesDb) => Promise<T> | T): Promise<T> {
   const db = MessagesDb.open(dbPath)
-  const onInterrupt = () => {
-    db.close()
-    process.exit(130)
-  }
-  process.once('SIGINT', onInterrupt)
+  const handlers = STOP_SIGNALS.map((signal) => {
+    const onSignal = () => {
+      db.close()
+      process.exit(128 + os.constants.signals[signal])
+    }
+    process.once(signal, onSignal)
+    return [signal, onSignal] as const
+  })
   try {
     return await fn(db)
   } finally {
-    process.removeListener('SIGINT', onInterrupt)
+    for (const [signal, onSignal] of handlers) process.removeListener(signal, onSignal)
     db.close()
   }
 }
@@ -121,21 +140,7 @@ async function solo(dbPath: string, year: number): Promise<void> {
 /** Shows exactly what goes into the link and lets you drop quotes before making it. */
 async function share(file: string): Promise<void> {
   const wrap = readWrapFile(file)
-  const name = (id: string) => wrap.people[id] ?? 'Someone'
-  console.log('This link will contain:\n')
-  console.log(`  Title:  ${wrap.title}`)
-  console.log(`  People: ${Object.values(wrap.people).join(', ')}`)
-  console.log(`  Awards: ${wrap.awards.map((a) => `${a.title} → ${name(a.personId)}`).join('; ')}`)
-  if (wrap.topChats.length > 0) console.log(`  Top chats: ${wrap.topChats.map((c) => c.name).join(', ')}`)
-  console.log(`  Top words: ${wrap.words.topWords.map((w) => w.word).join(', ')}`)
-  console.log('  Signature words:')
-  const signatures = Object.entries(wrap.words.signatureWordByPerson)
-  signatures.forEach(([id, word], i) => console.log(`    ${i + 1}. ${name(id)}: "${word}"`))
-  console.log('  Quotes:')
-  wrap.greatestHits.forEach((hit, i) => {
-    console.log(`    ${i + 1}. "${hit.text}" (${name(hit.senderId)})`)
-    if (looksLikeContactInfo(hit.text)) console.log('       ⚠ contains what looks like a phone number or email')
-  })
+  printReview(wrap)
 
   const rl = readline.createInterface({ input: process.stdin })
   // Reading lines from one iterator keeps piped input working (rl.question loses lines that arrive before it is asked).
@@ -147,27 +152,68 @@ async function share(file: string): Promise<void> {
     return line.done ? '' : line.value
   }
   try {
+    const signatures = Object.entries(wrap.words.signatureWordByPerson)
     // Signature words and quotes can name people outside the chat, so each one can be removed.
-    const dropSignatures = numbersToRemove(await ask('\nSignature word numbers to remove, or Enter to keep all: '))
-    const dropQuotes = numbersToRemove(await ask('Quote numbers to remove (e.g. 1,3), or Enter to keep all: '))
-    const reviewed: Wrap = {
-      ...wrap,
-      words: {
-        ...wrap.words,
-        signatureWordByPerson: Object.fromEntries(signatures.filter((_, i) => !dropSignatures.has(i))),
-      },
-      greatestHits: wrap.greatestHits.filter((_, i) => !dropQuotes.has(i)),
-    }
-    if ((await ask('Make the link? (y/n) ')).trim().toLowerCase() !== 'y') {
+    const dropSignatures = await askWhatToRemove(ask, 'Signature word numbers to remove', signatures.length)
+    const dropQuotes = await askWhatToRemove(ask, 'Quote numbers to remove', wrap.greatestHits.length)
+    console.log(`\n${describeRemovals(dropSignatures, dropQuotes)}`)
+    if (!isYes(await ask('Make the link? (y/n) '))) {
       console.log('No link made.')
       return
     }
+    const reviewed: Wrap = {
+      ...wrap,
+      words: { ...wrap.words, signatureWordByPerson: Object.fromEntries(signatures.filter((_, i) => !dropSignatures.has(i))) },
+      greatestHits: wrap.greatestHits.filter((_, i) => !dropQuotes.has(i)),
+    }
     const { packed, dropped } = await fitToLimit(reviewed)
-    if (dropped.length > 0) console.log(`Removed ${dropped.length} more quote(s) so the link isn't too long.`)
+    printDropped(dropped)
     console.log(`\n${SITE}/#${packed}\n`)
   } finally {
     rl.close()
   }
+}
+
+/** The one place message text is printed: the person sees exactly what the link will carry. */
+function printReview(wrap: Wrap): void {
+  const name = (id: string) => wrap.people[id] ?? 'Someone'
+  console.log('This link will contain:\n')
+  console.log(`  Title:  ${wrap.title}`)
+  console.log(`  People: ${Object.values(wrap.people).join(', ')}`)
+  console.log(`  Awards: ${wrap.awards.map((a) => `${a.title} → ${name(a.personId)}`).join('; ')}`)
+  if (wrap.topChats.length > 0) console.log(`  Top chats: ${wrap.topChats.map((c) => c.name).join(', ')}`)
+  console.log(`  Top words: ${wrap.words.topWords.map((w) => w.word).join(', ')}`)
+  console.log('  Signature words:')
+  Object.entries(wrap.words.signatureWordByPerson).forEach(([id, word], i) => console.log(`    ${i + 1}. ${name(id)}: "${word}"`))
+  console.log('  Quotes:')
+  wrap.greatestHits.forEach((hit, i) => {
+    console.log(`    ${i + 1}. "${hit.text}" (${name(hit.senderId)})`)
+    if (looksLikeContactInfo(hit.text)) console.log('       ⚠ contains what looks like a phone number or email')
+  })
+}
+
+/** Asks until the answer is a valid list of numbers (or empty). Bad input is never silently ignored. */
+async function askWhatToRemove(ask: (prompt: string) => Promise<string>, what: string, count: number): Promise<Set<number>> {
+  if (count === 0) return new Set()
+  for (;;) {
+    const result = numbersToRemove(await ask(`\n${what} (e.g. 1 3), or Enter to keep all: `), count)
+    if ('remove' in result) return result.remove
+    console.log(`${result.error} Try again.`)
+  }
+}
+
+function describeRemovals(signatures: Set<number>, quotes: Set<number>): string {
+  const numbers = (set: Set<number>) => [...set].map((i) => i + 1).sort((a, b) => a - b).join(', ')
+  const parts: string[] = []
+  if (signatures.size > 0) parts.push(`signature word${signatures.size > 1 ? 's' : ''} ${numbers(signatures)}`)
+  if (quotes.size > 0) parts.push(`quote${quotes.size > 1 ? 's' : ''} ${numbers(quotes)}`)
+  return parts.length > 0 ? `Removing ${parts.join(' and ')}.` : 'Nothing will be removed.'
+}
+
+function printDropped(dropped: Hit[]): void {
+  if (dropped.length === 0) return
+  console.log(`Removed ${dropped.length} more quote(s) so the link isn't too long:`)
+  for (const hit of dropped) console.log(`  "${hit.text}"`)
 }
 
 /** Reads a saved wrap, and gives a clear error for a missing, hand-edited or wrong file. */
@@ -190,6 +236,7 @@ function readWrapFile(file: string): Wrap {
 }
 
 async function demo(out: string | undefined): Promise<void> {
+  process.env.TZ = 'UTC' // the fake chat is scripted in UTC, so this keeps the demo the same everywhere
   const wrap = makeFakeWrap('group')
   if (out) {
     fs.writeFileSync(out, JSON.stringify(wrap, null, 2))
@@ -228,20 +275,27 @@ function saveWrap(wrap: Wrap, fileName: string): string {
 
 function report(file: string, undecodable: number): void {
   console.log(`Saved ${file}`)
+  console.log('It has names and quotes in it and stays on this Mac (out/ is gitignored).')
   if (undecodable > 0) console.log(`Skipped ${undecodable} message(s) that couldn't be decoded.`)
 }
 
 async function preview(wrap: Wrap): Promise<void> {
   const { packed, dropped } = await fitToLimit(wrap)
   if (dropped.length > 0) console.log(`Left ${dropped.length} quote(s) out of the preview so the link isn't too long.`)
+  const url = `${SITE}/#${packed}`
   console.log('Opening the preview. If the page is blank, start the viewer with: npm run web:dev')
-  execFile('open', [`${SITE}/#${packed}`])
+  execFile('open', [url], (err) => {
+    if (err) console.log(`Couldn't open a browser. Start the viewer with \`npm run web:dev\` and open this link:\n${url}`)
+  })
 }
 
 main().catch((err: unknown) => {
   if (err instanceof WrappedError) {
     console.error(err.message)
-    process.exit(1)
+  } else if (process.env.DEBUG) {
+    console.error(err)
+  } else {
+    console.error(`Unexpected error: ${err instanceof Error ? err.message : String(err)}`)
   }
-  throw err
+  process.exit(1)
 })
