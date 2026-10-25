@@ -97,7 +97,7 @@ describe('normalizeRows', () => {
   })
 
   it('keeps a caption next to an attachment placeholder', () => {
-    const { messages } = normalizeRows([row({ id: 1, text: '￼ nice pic', hasAttachment: 1 })])
+    const { messages } = normalizeRows([row({ id: 1, text: '\uFFFC nice pic', hasAttachment: 1 })])
     expect(messages[0]).toMatchObject({ text: 'nice pic', hasAttachment: true })
   })
 
