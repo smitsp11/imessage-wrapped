@@ -98,6 +98,7 @@ describe('buildWrap', () => {
     })
 
     it('never gives an award to "Everyone else"', () => {
+      // without the exclusion, the two collapsed contacts would win Hype Man between them
       expect(solo.awards.some((a) => a.id === 'hype')).toBe(false)
       expect(solo.awards.some((a) => a.personId === 'others')).toBe(false)
       // control: the same messages with the two collapsed contacts as one person do give them Hype Man
@@ -105,6 +106,21 @@ describe('buildWrap', () => {
       const group = buildWrap(merged, { mode: 'group', title: 'Test', ...period, nameFor: (h) => `Name ${h.slice(-1)}` })
       const hype = group.awards.find((a) => a.id === 'hype')
       expect(hype && group.people[hype.personId]).toBe('Name 5')
+    })
+
+    it('gives a count award to the best real contact when "Everyone else" has more', () => {
+      // "Everyone else" (chats 6 and 7) starts 8 conversations; Name 2 starts 5, the best of the real contacts
+      const day = (d: number) => `2026-04-${String(d).padStart(2, '0')}T10:00:00Z`
+      const extra = [
+        ...[1, 2, 3, 4, 5, 6].map((d) => msg({ senderId: handles[6]!, chatId: 7, sentAt: day(d), text: 'again' })),
+        ...[1, 2, 3, 4].map((d) => msg({ senderId: handles[1]!, chatId: 2, sentAt: day(d), text: 'again' })),
+      ]
+      const wrap = buildWrap([...messages(), ...extra], { mode: 'solo', title: 'Test', ...period, nameFor: (h) => `Name ${h.slice(-1)}` })
+      expect(wrap.starters.startsByPerson.others).toBe(8)
+      const starter = wrap.awards.find((a) => a.id === 'starter')
+      expect(starter && wrap.people[starter.personId]).toBe('Name 1')
+      expect(starter?.value).toBe(5)
+      expect(wrap.awards.some((a) => a.personId === 'others')).toBe(false)
     })
 
     it('keeps only your own messages as greatest hits, counting everyone\'s reactions', () => {

@@ -6,7 +6,11 @@ import type { TimingStats } from './stats/timing'
 import type { VolumeStats } from './stats/volume'
 import type { WordStats } from './stats/words'
 
-export type ReactionType = 'love' | 'like' | 'dislike' | 'laugh' | 'emphasize' | 'question' | 'emoji'
+export const REACTION_TYPES = ['love', 'like', 'dislike', 'laugh', 'emphasize', 'question', 'emoji'] as const
+export type ReactionType = (typeof REACTION_TYPES)[number]
+
+/** the id of the solo-wrap person who stands for everyone outside your top contacts */
+export const OTHERS_ID = 'others'
 
 export type Message = {
   id: number
@@ -33,15 +37,8 @@ export type Chat = {
   messageCount: number
 }
 
-export type AwardId =
-  | 'main-character'
-  | 'ghost'
-  | 'starter'
-  | 'comedian'
-  | 'hype'
-  | 'night-owl'
-  | 'double-texter'
-  | 'lurker'
+export const AWARD_IDS = ['main-character', 'ghost', 'starter', 'comedian', 'hype', 'night-owl', 'double-texter', 'lurker'] as const
+export type AwardId = (typeof AWARD_IDS)[number]
 
 export type Award = {
   id: AwardId

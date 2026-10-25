@@ -1,4 +1,5 @@
 import { formatMinutes } from '../../src/format'
+import { OTHERS_ID } from '../../src/types'
 import type { Wrap } from '../../src/types'
 
 export type Slide = { id: string; html: string }
@@ -12,7 +13,6 @@ const MIN_BAR_PERCENT = 2
 /** a median over a handful of replies says little, so fewer than this don't make the fastest-replies list */
 const MIN_REPLIES_FOR_FASTEST = 5
 /** the id buildWrap gives the solo "Everyone else" bucket */
-const OTHERS_ID = 'others'
 
 export function escapeHtml(text: string): string {
   const entities: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }

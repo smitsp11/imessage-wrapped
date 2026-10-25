@@ -1,5 +1,5 @@
 import type { Message } from '../types'
-import { contentMessages } from './conversation'
+import { bump, byCountThenKey, contentMessages } from './conversation'
 import { STOPWORDS } from './stopwords'
 
 export type WordStats = {
@@ -88,10 +88,6 @@ function signatureWords(byPerson: Map<string, Map<string, number>>, totals: Map<
   return result
 }
 
-function bump(counts: Map<string, number>, key: string): void {
-  counts.set(key, (counts.get(key) ?? 0) + 1)
-}
-
 function sum(counts: Map<string, number>): number {
   let total = 0
   for (const n of counts.values()) total += n
@@ -99,5 +95,5 @@ function sum(counts: Map<string, number>): number {
 }
 
 function top(counts: Map<string, number>): [string, number][] {
-  return [...counts].sort(([a, x], [b, y]) => y - x || (a < b ? -1 : a > b ? 1 : 0)).slice(0, TOP_LIMIT)
+  return [...counts.keys()].sort(byCountThenKey(counts)).slice(0, TOP_LIMIT).map((key) => [key, counts.get(key)!])
 }

@@ -19,7 +19,7 @@ async function loadWrap(): Promise<Wrap | null> {
 
 async function loadDemo(): Promise<Wrap> {
   try {
-    const response = await fetch('/demo.json')
+    const response = await fetch(import.meta.env.BASE_URL + 'demo.json')
     if (!response.ok) throw new DemoLoadError()
     // A fetched file is untrusted too: check its shape like a link's.
     return parseWrap(await response.json())

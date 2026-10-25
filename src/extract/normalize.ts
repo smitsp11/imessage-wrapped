@@ -1,4 +1,5 @@
-import type { Message, ReactionType } from '../types'
+import { REACTION_TYPES } from '../types'
+import type { Message } from '../types'
 import { appleMsToDate } from './appleTime'
 import { decodeAttributedBody } from './decodeBody'
 
@@ -21,8 +22,7 @@ export type MessageRow = {
 
 export type NormalizeResult = { messages: Message[]; undecodable: number }
 
-/** associated_message_type: 2000 + index adds a reaction, 3000 + index removes it. */
-const REACTIONS: ReactionType[] = ['love', 'like', 'dislike', 'laugh', 'emphasize', 'question', 'emoji']
+/** associated_message_type: 2000 + index adds a reaction, 3000 + index removes it. The order of REACTION_TYPES matters: it is the index. */
 const ADD_BASE = 2000
 const REMOVE_BASE = 3000
 
@@ -38,7 +38,7 @@ export function normalizeRows(rows: MessageRow[]): NormalizeResult {
 
     if (assocType !== 0) {
       const removal = assocType >= REMOVE_BASE
-      const reactionType = REACTIONS[assocType - (removal ? REMOVE_BASE : ADD_BASE)]
+      const reactionType = REACTION_TYPES[assocType - (removal ? REMOVE_BASE : ADD_BASE)]
       if (!reactionType || !row.assocGuid) continue // stickers and other non-reaction links
 
       const target = stripPartPrefix(row.assocGuid)

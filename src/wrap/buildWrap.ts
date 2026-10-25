@@ -1,7 +1,7 @@
 import { pickAwards } from '../awards/rules'
 import { EmptyPeriodError } from '../errors'
 import { maskHandle } from '../format'
-import { contentMessages, increment } from '../stats/conversation'
+import { byCountThenKey, contentMessages, increment } from '../stats/conversation'
 import { greatestHits } from '../stats/greatestHits'
 import { reactionStats } from '../stats/reactions'
 import { replyStats } from '../stats/replies'
@@ -9,6 +9,7 @@ import { starterStats } from '../stats/starters'
 import { timingStats } from '../stats/timing'
 import { volumeStats } from '../stats/volume'
 import { wordStats } from '../stats/words'
+import { OTHERS_ID } from '../types'
 import type { Chat, Message, Wrap } from '../types'
 
 export type BuildOptions = {
@@ -24,7 +25,6 @@ export type BuildOptions = {
 
 const TOP_CHATS = 5
 const SOLO_TOP_PEOPLE = 5
-const OTHERS_ID = 'others'
 /** stands in for "everyone outside your top contacts" until ids are assigned; cannot collide with a real handle */
 const OTHERS_HANDLE = '\0others'
 
@@ -60,8 +60,8 @@ export function buildWrap(all: Message[], options: BuildOptions): Wrap {
   const hits = solo
     ? greatestHits(relabel(inPeriod, assignPersonIds(inPeriod))).filter((h) => h.senderId === 'me')
     : greatestHits(messages)
-  // If "Everyone else" was the unique winner of an award, the award is simply dropped.
-  const awards = pickAwards({ volume, timing, replies, starters, reactions }, options.mode).filter((a) => a.personId !== OTHERS_ID)
+  // "Everyone else" is a sum of many people, so it never competes for awards.
+  const awards = pickAwards({ volume, timing, replies, starters, reactions }, options.mode, solo ? [OTHERS_ID] : [])
 
   return {
     version: 1,
@@ -90,10 +90,6 @@ function relabel(messages: Message[], ids: Map<string, string>): Message[] {
 function localDate(d: Date): string {
   const pad = (n: number) => String(n).padStart(2, '0')
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
-}
-
-function byCountThenKey(counts: Record<string, number>) {
-  return (a: string, b: string) => counts[b]! - counts[a]! || (a < b ? -1 : a > b ? 1 : 0)
 }
 
 function countBySender(messages: Message[]): Record<string, number> {

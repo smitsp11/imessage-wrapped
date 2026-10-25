@@ -20,6 +20,17 @@ export function threads(messages: Message[]): Message[][] {
   return [...byChat.values()].map((list) => list.sort((a, b) => a.sentAt.getTime() - b.sentAt.getTime()))
 }
 
+/** Counts a key in a Map. */
+export function bump(counts: Map<string, number>, key: string): void {
+  counts.set(key, (counts.get(key) ?? 0) + 1)
+}
+
+/** Sort comparator: highest count first, ties broken by key so the order is deterministic. */
+export function byCountThenKey(counts: Map<string, number> | Record<string, number>) {
+  const count = (key: string) => (counts instanceof Map ? counts.get(key) : counts[key]) ?? 0
+  return (a: string, b: string) => count(b) - count(a) || (a < b ? -1 : a > b ? 1 : 0)
+}
+
 export function increment(counts: Record<string, number>, key: string, by = 1): void {
   counts[key] = (counts[key] ?? 0) + by
 }

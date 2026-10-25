@@ -4,6 +4,7 @@ import os from 'node:os'
 import path from 'node:path'
 import readline from 'node:readline/promises'
 import { parseArgs } from 'node:util'
+// The demo command deliberately reuses the test fixture, so the demo and the tests show the same fake chat.
 import { makeFakeWrap } from '../fixtures/fakeWrap'
 import { findChat, isYes, looksLikeContactInfo, numbersToRemove, parseYear, slug } from './cliHelpers'
 import { BrokenLinkError, NewerVersionError, WrappedError } from './errors'

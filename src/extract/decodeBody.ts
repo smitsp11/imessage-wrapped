@@ -5,8 +5,8 @@
  * length: one byte below 0x80, or 0x81 + 2 bytes, or 0x82 + 4 bytes (little-endian).
  * The length is signed in typedstream but never negative here, so it is read unsigned.
  * Returns null when there is no text or the blob can't be decoded (including invalid UTF-8).
- * Known limitation: only the first "NSString" is read, so other string classes return null
- * (to be checked against real data later).
+ * Known limitation: only the first "NSString" is read, so messages whose text is stored under another
+ * string class decode to null and are counted as undecodable.
  */
 const CLASS_NAME = 'NSString'
 const TYPE_INFO_LENGTH = 5

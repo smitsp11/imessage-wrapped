@@ -1,10 +1,9 @@
 import { BrokenLinkError, NewerVersionError } from '../errors'
+import { AWARD_IDS, REACTION_TYPES } from '../types'
 import type { Wrap } from '../types'
 
 const PERSON_ID = /^(me|others|p\d+)$/
 const DATE = /^\d{4}-\d{2}-\d{2}$/
-const REACTION_TYPES = ['love', 'like', 'dislike', 'laugh', 'emphasize', 'question', 'emoji']
-const AWARD_IDS = ['main-character', 'ghost', 'starter', 'comedian', 'hype', 'night-owl', 'double-texter', 'lurker']
 
 function fail(): never {
   throw new BrokenLinkError()
@@ -26,7 +25,7 @@ function isPersonId(value: unknown): value is string {
   return isString(value) && PERSON_ID.test(value)
 }
 
-function isOneOf(options: string[]) {
+function isOneOf(options: readonly string[]) {
   return (value: unknown) => isString(value) && options.includes(value)
 }
 
@@ -102,7 +101,7 @@ export function parseWrap(value: unknown): Wrap {
   checkPersonRecord(r.givenByPerson)
   checkPersonRecord(r.receivedByPerson)
   checkPersonRecord(r.laughsReceivedByPerson)
-  checkRecord(r.byType, (key) => REACTION_TYPES.includes(key), isFiniteNumber)
+  checkRecord(r.byType, (key) => (REACTION_TYPES as readonly string[]).includes(key), isFiniteNumber)
 
   check(isRecord(words))
   const w = words as Record<string, unknown>

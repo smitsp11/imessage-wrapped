@@ -100,12 +100,12 @@ const RULES: Rule[] = [
 /**
  * Every award comes from one number, compared unrounded, and goes to a unique winner who clears the rule's threshold.
  * A tie for the best number means no award. Solo wraps skip Main Character and The Lurker: you are in every chat,
- * and "lurker" across all your chats isn't true of anyone.
+ * and "lurker" across all your chats isn't true of anyone. People in `exclude` are never candidates.
  */
-export function pickAwards(stats: AwardInputs, mode: 'group' | 'solo' = 'group'): Award[] {
-  // sorted only so the output is deterministic
+export function pickAwards(stats: AwardInputs, mode: 'group' | 'solo' = 'group', exclude: readonly string[] = []): Award[] {
+  // `exclude`: people who can't win (they are dropped before ranking). Sorted only so the output is deterministic.
   const people = Object.keys(stats.volume.byPerson)
-    .filter((p) => (stats.volume.byPerson[p] ?? 0) >= MIN_MESSAGES_FOR_AWARD)
+    .filter((p) => !exclude.includes(p) && (stats.volume.byPerson[p] ?? 0) >= MIN_MESSAGES_FOR_AWARD)
     .sort()
 
   const awards: Award[] = []
