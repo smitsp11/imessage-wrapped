@@ -42,6 +42,18 @@ export class EmptyPeriodError extends WrappedError {
   }
 }
 
+export class BrokenLinkError extends WrappedError {
+  constructor() {
+    super('This link is broken or incomplete. Ask for it again.')
+  }
+}
+
+export class NewerVersionError extends WrappedError {
+  constructor() {
+    super('This wrap was made by a newer version of iMessage Wrapped.')
+  }
+}
+
 export function errorCode(err: unknown): string | undefined {
   if (typeof err === 'object' && err !== null && 'code' in err) return String(err.code)
   return undefined

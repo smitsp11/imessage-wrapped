@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import { WrappedError } from '../../src/errors'
-import { fitToLimit, packWrap, unpackWrap } from '../../src/share/pack'
+import { BrokenLinkError, NewerVersionError, WrappedError } from '../../src/errors'
+import { MAX_LINK_CHARS, fitToLimit, packWrap, unpackWrap } from '../../src/share/pack'
+import type { Wrap } from '../../src/types'
 import { makeFakeWrap } from '../../fixtures/fakeWrap'
 
 /** Pseudo-random letters, so the text doesn't compress away. */
@@ -36,5 +37,33 @@ describe('share links', () => {
 
   it('fails clearly when even no quotes is too big', async () => {
     await expect(fitToLimit(wrap, 10)).rejects.toThrow(WrappedError)
+  })
+
+  it.each(['group', 'solo'] as const)('round-trips the %s fake wrap, even with a newline in the link', async (mode) => {
+    const original = makeFakeWrap(mode)
+    const packed = await packWrap(original)
+    const middle = Math.floor(packed.length / 2)
+    expect(await unpackWrap(`${packed.slice(0, middle)}\n${packed.slice(middle)}`)).toEqual(original)
+  })
+
+  describe('untrusted links', () => {
+    const packAny = (value: unknown) => packWrap(value as Wrap)
+
+    it('rejects unusable links with BrokenLinkError', async () => {
+      const packed = await packWrap(wrap)
+      const broken = [
+        '<script>alert(1)</script>',
+        packed.slice(0, -20),
+        '',
+        'a'.repeat(MAX_LINK_CHARS + 1),
+        await packAny(null),
+        await packAny({ version: 1 }),
+      ]
+      for (const link of broken) await expect(unpackWrap(link)).rejects.toThrow(BrokenLinkError)
+    })
+
+    it('says so when the wrap is from a newer version', async () => {
+      await expect(unpackWrap(await packAny({ version: 2 }))).rejects.toThrow(NewerVersionError)
+    })
   })
 })

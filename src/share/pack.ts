@@ -1,6 +1,7 @@
-import { WrappedError } from '../errors'
+import { BrokenLinkError, WrappedError } from '../errors'
 import type { Hit } from '../stats/greatestHits'
 import type { Wrap } from '../types'
+import { parseWrap } from './parseWrap'
 
 /** Characters allowed after the "#". Long enough for stats + a few quotes, short enough to paste. */
 export const MAX_LINK_CHARS = 8192
@@ -10,14 +11,22 @@ export async function packWrap(wrap: Wrap): Promise<string> {
   return toBase64Url(await transform(json, new CompressionStream('deflate-raw')))
 }
 
+/** Anything after the "#" is untrusted: check size and characters, then the shape of the data. */
 export async function unpackWrap(packed: string): Promise<Wrap> {
-  const json = await transform(fromBase64Url(packed), new DecompressionStream('deflate-raw'))
-  const wrap = JSON.parse(new TextDecoder().decode(json)) as Wrap
-  if (wrap.version !== 1) throw new WrappedError('This wrap was made by a newer version of iMessage Wrapped.')
-  return wrap
+  const link = packed.replace(/\s+/g, '')
+  // The length cap also caps inflation: deflate expands at most ~1032:1, so at most ~8 MB comes out.
+  if (link.length === 0 || link.length > MAX_LINK_CHARS || !/^[A-Za-z0-9_-]+$/.test(link)) throw new BrokenLinkError()
+  let value: unknown
+  try {
+    const json = await transform(fromBase64Url(link), new DecompressionStream('deflate-raw'))
+    value = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(json))
+  } catch {
+    throw new BrokenLinkError()
+  }
+  return parseWrap(value)
 }
 
-/** Removes quotes from the end (fewest reactions) until the packed wrap fits. */
+/** Removes quotes from the end until the packed wrap fits. Expects `greatestHits` sorted most-reacted first, as `greatestHits()` returns it. */
 export async function fitToLimit(wrap: Wrap, limit = MAX_LINK_CHARS): Promise<{ packed: string; dropped: Hit[] }> {
   const kept = [...wrap.greatestHits]
   const dropped: Hit[] = []
@@ -38,6 +47,7 @@ async function transform(
   return new Uint8Array(await new Response(output).arrayBuffer())
 }
 
+// Uint8Array#toBase64 isn't available in Node 22 yet.
 function toBase64Url(bytes: Uint8Array): string {
   let binary = ''
   for (const byte of bytes) binary += String.fromCharCode(byte)
