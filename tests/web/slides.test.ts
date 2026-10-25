@@ -63,6 +63,14 @@ describe('buildSlides', () => {
     expect(slideHtml(wrap, 'hits')).toContain('2 reactions<')
   })
 
+  it('lists at most 6 signature words', () => {
+    const wrap = makeFakeWrap('group')
+    wrap.words.signatureWordByPerson = Object.fromEntries(Array.from({ length: 9 }, (_, n) => [`p${n}`, `word${n}`]))
+    const html = slideHtml(wrap, 'words')
+    expect(html).toContain('word5')
+    expect(html).not.toContain('word6')
+  })
+
   it('says "You say" for your own signature word', () => {
     const wrap = makeFakeWrap('group')
     wrap.words.signatureWordByPerson = { me: 'omw', p1: 'lol' }

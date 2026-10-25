@@ -6,6 +6,7 @@ type Row = { name: string; value: number }
 
 const MAX_BARS = 6
 const MAX_QUOTES = 3
+const MAX_SIGNATURES = 6
 /** the smallest bar stays visible */
 const MIN_BAR_PERCENT = 2
 /** a median over a handful of replies says little, so fewer than this don't make the fastest-replies list */
@@ -68,7 +69,8 @@ export function buildSlides(wrap: Wrap): Slide[] {
     id: 'intro',
     html: `<p class="kicker">${isGroup ? 'Group Chat Wrapped' : 'Your Texts Wrapped'} · ${year}</p>
       <h1>${escapeHtml(wrap.title)}</h1>
-      <p class="big">${wrap.volume.total.toLocaleString('en-US')}</p><p>messages</p>`,
+      <p class="big">${wrap.volume.total.toLocaleString('en-US')}</p><p>messages</p>
+      <p class="hint">Tap or press → to continue</p>`,
   })
 
   // Solo: you are in every chat, so "who you text the most" leaves you out.
@@ -154,6 +156,7 @@ function wordsSlide(wrap: Wrap): Slide | null {
     .map((w) => `<li>${escapeHtml(w.word)} <small>${w.count.toLocaleString('en-US')}</small></li>`)
     .join('')
   const signature = Object.entries(signatureWordByPerson)
+    .slice(0, MAX_SIGNATURES)
     .map(([id, word]) => {
       const who = id === 'me' ? 'You say' : `${escapeHtml(personName(wrap, id))} says`
       return `<li>${who} <b>“${escapeHtml(word)}”</b></li>`
@@ -177,5 +180,7 @@ function hitsSlide(wrap: Wrap): Slide | null {
       `<figcaption>${who} · ${plural(h.reactions, 'reaction')}</figcaption></figure>`
     )
   })
-  return { id: 'hits', html: `<h2>Greatest hits</h2>${quotes.join('')}` }
+  // Two or three quotes get a smaller type size so they fit.
+  const size = quotes.length > 1 ? 'compact' : 'single'
+  return { id: 'hits', html: `<h2>Greatest hits</h2><div class="quotes ${size}">${quotes.join('')}</div>` }
 }
