@@ -3,11 +3,16 @@
  * `attributedBody`, an NSAttributedString in Apple's "typedstream" format.
  * The string follows the class name "NSString", 5 bytes of type info, then a
  * length: one byte below 0x80, or 0x81 + 2 bytes, or 0x82 + 4 bytes (little-endian).
+ * The length is signed in typedstream but never negative here, so it is read unsigned.
+ * Returns null when there is no text or the blob can't be decoded (including invalid UTF-8).
+ * Known limitation: only the first "NSString" is read, so other string classes return null
+ * (to be checked against real data later).
  */
 const CLASS_NAME = 'NSString'
 const TYPE_INFO_LENGTH = 5
 const INT16_TAG = 0x81
 const INT32_TAG = 0x82
+const utf8 = new TextDecoder('utf-8', { fatal: true })
 
 export function decodeAttributedBody(blob: Uint8Array | null): string | null {
   if (!blob) return null
@@ -36,5 +41,9 @@ export function decodeAttributedBody(blob: Uint8Array | null): string | null {
   }
 
   if (length === 0 || i + length > bytes.length) return null
-  return bytes.subarray(i, i + length).toString('utf8')
+  try {
+    return utf8.decode(bytes.subarray(i, i + length))
+  } catch {
+    return null
+  }
 }

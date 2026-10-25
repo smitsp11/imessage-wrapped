@@ -6,6 +6,7 @@ export function appleMsToDate(ms: number): Date {
   return new Date(APPLE_EPOCH_MS + ms)
 }
 
+/** Nanoseconds since the Apple epoch, for fixtures and SQL query bounds. */
 export function toAppleNs(date: Date): bigint {
   return BigInt(date.getTime() - APPLE_EPOCH_MS) * 1_000_000n
 }

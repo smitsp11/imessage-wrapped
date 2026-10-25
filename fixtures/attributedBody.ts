@@ -8,7 +8,7 @@ const TRAILER = Buffer.from([0x86, 0x84, 0x02, 0x69, 0x49, 0x01])
 
 function encodeLength(length: number): Buffer {
   if (length < 0x80) return Buffer.from([length])
-  if (length <= 0xffff) {
+  if (length <= 0x7fff) {
     const out = Buffer.alloc(3)
     out[0] = 0x81
     out.writeUInt16LE(length, 1)
