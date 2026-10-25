@@ -3,6 +3,16 @@
   "version": "0.1.0",
   "private": true,
   "license": "MIT",
+  "author": "Smit Patel",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/smitsp11/imessage-wrapped.git"
+  },
+  "homepage": "https://github.com/smitsp11/imessage-wrapped#readme",
+  "bugs": {
+    "url": "https://github.com/smitsp11/imessage-wrapped/issues"
+  },
+  "keywords": ["imessage", "wrapped", "macos", "typescript", "sqlite"],
   "type": "module",
   "description": "Spotify Wrapped for your iMessage group chats. Runs locally on your Mac.",
   "engines": {

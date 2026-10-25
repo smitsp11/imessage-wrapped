@@ -1,6 +1,6 @@
 # iMessage Wrapped: design
 
-Status: approved Oct 25, 2026. v1 scope.
+Status: v1 is implemented. This document is the design as built; README.md is the quick start.
 
 ## What it is
 
@@ -31,24 +31,31 @@ src/
   extract/
     messagesDb.ts       MessagesDb class: copies chat.db, opens it read-only (better-sqlite3), queries chats and messages
     contactBook.ts      ContactBook class: maps phone numbers and emails to names from the macOS AddressBook databases
+    copyDb.ts           copies chat.db (plus -wal and -shm) to a temp file and removes it afterwards
     decodeBody.ts       pulls plain text out of the `attributedBody` blob when `text` is NULL
     appleTime.ts        converts Apple timestamps (ns since 2001-01-01) to Date
     normalize.ts        database rows → Message[]
   stats/                one file per stat group, all of them standalone functions over Message[]
     volume.ts  timing.ts  replies.ts  starters.ts  reactions.ts  words.ts  greatestHits.ts
+    conversation.ts     shared helpers: time constants, threads, counters, sort comparator
+    stopwords.ts        words left out of the word stats
   awards/
     rules.ts            Award rules: stats → Award[] (each award carries the number that earned it)
   wrap/
     buildWrap.ts        Message[] + mode → Wrap (the single JSON shape the slides render)
   share/
     pack.ts             Wrap → compressed, base64url string; and the reverse
+    parseWrap.ts        validates untrusted wrap data (links and demo.json) before the slides see it
   cli.ts                command-line entry point
-  types.ts              Message, Person, Chat, Wrap, Award
-web/                    Vite app: reads a Wrap (from a local file or the link) and plays the slides
+  cliHelpers.ts         input checking for the commands (chat lookup, years, yes/no)
+  errors.ts             the errors the CLI and viewer explain in plain words
+  format.ts             small display helpers (percent, minutes, masked handles)
+  types.ts              Message, Chat, Wrap, Award, and the shared reaction and award lists
+web/                    Vite app: reads the link (or `#demo`) and plays the slides
 fixtures/
   makeFakeDb.ts         builds a fake chat.db using Apple's real tables, with scripted conversations
 tests/                  vitest unit and integration tests
-e2e/                    one Playwright test for the slides
+e2e/                    Playwright tests for the slides (desktop + phone)
 ```
 
 Classes are used only where something holds state: `MessagesDb` (the database connection) and `ContactBook` (the name lookup). Everything else is a plain function.
@@ -78,13 +85,15 @@ Reactions are rows in `message` with `associated_message_type` 2000–2006 (adde
 | Group | Stats |
 |---|---|
 | Volume | total messages; each person's share; attachments sent |
-| Timing | heatmap by month, weekday and hour; longest daily streak; longest silence; share sent 12–5 AM |
+| Timing | heatmaps by month, weekday and hour (computed; the slides show the hour chart); longest daily streak; longest silence; share sent 12–5 AM |
 | Replies | median reply time per person (only replies within 12 h count) |
 | Starters | who sends the first message after a gap of 6 h or more; double texts (2+ in a row with no reply for 10 min) |
 | Reactions | given and received per person and type; most-reacted messages (greatest hits) |
 | Words | top emoji; top words (stopwords removed); each person's signature word (most over-used compared with the rest of the group, by a smoothed log ratio of their rate vs everyone else's); longest message |
 
-Solo mode uses the same functions over all your chats. It keeps you and the 5 contacts who sent the most messages; everyone else is grouped as 'Everyone else'. Word stats and greatest hits use only your own messages, and awards never go to 'Everyone else'.
+Solo mode uses the same functions over all your chats. It keeps you and the 5 contacts who sent the most messages; everyone else is grouped as 'Everyone else'. Word stats and greatest hits use only your own messages, and awards never go to 'Everyone else' (it is excluded before ranking, so the best real contact wins instead).
+
+Some computed stats (longest message, attachments, month and weekday counts, reactions received and by type) are kept in the wrap for future slides.
 
 ## Awards
 
@@ -107,12 +116,12 @@ Solo wraps skip Main Character and The Lurker.
 
 The link carries the wrap itself: `https://<site>/#<packed wrap>`. People appear in a wrap as short ids (`me`, `p1`, `p2`…) with display names, never as phone numbers or emails.
 
-1. `wrapped share <file>` prints exactly what will go into the link: names, numbers, top words, each signature word and each quote.
+1. `wrapped share <file>` prints exactly what will go into the link: title, people, awards, top chats, top words, each signature word and each quote.
 2. You confirm (y/n) and can drop any signature word or quote first.
 3. The wrap is compressed (deflate via `CompressionStream`, which both Node and browsers have) and base64url-encoded into the part after `#`.
 4. The static site reads the `#` part in the browser. Browsers never send it to a server, so the host stores nothing.
 
-The site is a static Vite build on Vercel. There's no backend and no database.
+The site is a static Vite build (not deployed yet). There's no backend and no database.
 
 A link may hold at most 8 KB after the `#`. If a wrap is bigger, the CLI drops quotes (lowest reaction count first) until it fits and tells you what was dropped.
 
@@ -120,7 +129,7 @@ A link may hold at most 8 KB after the `#`. If a wrap is bigger, the CLI drops q
 
 ```
 wrapped list                          chats with message counts and members
-wrapped group <chatId> [--year 2026]  build a group wrap → out/<name>.json, open a local preview
+wrapped group <chat id or name> [--year 2026]  build a group wrap → out/<slug>-<year>.json, open a local preview
 wrapped me [--year 2026]              build a solo wrap → out/me-2026.json, open a local preview
 wrapped share <out/file.json>         review → print the share link
 wrapped demo [--out file]             build a wrap from the fake database (no Full Disk Access needed)
@@ -139,12 +148,12 @@ wrapped demo [--out file]             build a wrap from the fake database (no Fu
 
 ## Testing
 
-- **Fake database:** `fixtures/makeFakeDb.ts` builds a `chat.db` with Apple's real table and column names (`message`, `handle`, `chat`, `chat_message_join`, `chat_handle_join`) and scripted fake friends with known answers. Example: "Alex replies in a median 4 minutes," "Sam laughs at 30 messages." It's generated at test time and never committed.
+- **Fake database:** `fixtures/makeFakeDb.ts` builds a `chat.db` with Apple's real table and column names (`message`, `handle`, `chat`, `chat_message_join`, `chat_handle_join`) and scripted fake friends with known answers. Examples: "Jordan's median reply is exactly 5 hours," "Sam laughs at Alex's opener every evening." It's generated at test time and never committed.
 - **Messages that count:** only rows with `item_type = 0` (real messages, not "X named the conversation" events), and only rows with text or an attachment.
 - **Unit tests:** every stat and award function is tested against hand-built `Message[]` inputs with exact expected values.
 - **Integration test:** fake db → `MessagesDb` → `buildWrap` → expected Wrap.
 - **Share round trip:** `unpack(pack(wrap))` deep-equals `wrap`, plus the 8 KB trimming.
-- **Slides:** one Playwright test opens the demo link and checks that the first and last slides render and that tapping advances.
+- **Slides:** a Playwright suite runs on desktop and phone viewports: it opens the demo link, checks the first and last slides render, that tapping advances, and that bad links and long names are handled.
 
 ## Out of scope for v1
 

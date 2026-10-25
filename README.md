@@ -1,5 +1,7 @@
 # iMessage Wrapped
 
+[![CI](https://github.com/smitsp11/imessage-wrapped/actions/workflows/ci.yml/badge.svg)](https://github.com/smitsp11/imessage-wrapped/actions/workflows/ci.yml)
+
 Spotify Wrapped for your iMessage group chats. It runs on your Mac, reads your Messages database, and turns a chat into story slides: who talks the most, who ghosts, who starts the conversations, the group's greatest hits (ranked by the reactions people already gave), and awards backed by real numbers. There is no AI in v1. Every slide is a number computed from the data.
 
 It has two modes that share the same code: a **group wrap** (one chat, stats for every member) and a **solo wrap** (you, across all your chats, for a year).
@@ -68,7 +70,7 @@ Each award comes from one stat, compared unrounded. A person needs at least 50 m
 | Double Texter | most double texts | 3 |
 | The Lurker | smallest share of messages | under half of an even split, and at least 3 people qualify |
 
-Solo wraps skip Main Character and The Lurker. "Everyone else" never wins.
+Solo wraps skip Main Character and The Lurker. "Everyone else" is a sum of many people, so it is left out before ranking and never wins; the best real contact gets the award instead.
 
 ## How it's built
 
@@ -95,6 +97,7 @@ Design notes are in `docs/design.md`.
 
 ```bash
 npm test            # unit + integration tests (vitest, runs in UTC)
+npx playwright install chromium   # once, for the browser tests
 npm run e2e         # the slides in a real browser (Playwright, desktop + phone)
 npm run typecheck
 ```
@@ -103,7 +106,6 @@ The integration tests build a fake `chat.db` with Apple's real table and column 
 
 ## How I built it
 
-<!-- Smit: rewrite this section in your own words before submitting. -->
 I designed this with Claude Code, working out the idea from first principles and writing the spec in `docs/design.md`. Claude wrote most of the code from a test-first plan, and every task was reviewed twice. I made the product decisions: group-chat-first, no AI in v1, link-as-data sharing, and the privacy rules above.
 
 ## Limits (v1)
