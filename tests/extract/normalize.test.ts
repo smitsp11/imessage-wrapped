@@ -54,7 +54,7 @@ describe('normalizeRows', () => {
   })
 
   it('keeps attachment-only messages with null text', () => {
-    const { messages } = normalizeRows([row({ id: 1, text: '￼', hasAttachment: 1 })])
+    const { messages } = normalizeRows([row({ id: 1, text: '\uFFFC', hasAttachment: 1 })])
     expect(messages[0]).toMatchObject({ text: null, hasAttachment: true })
   })
 
@@ -94,5 +94,69 @@ describe('normalizeRows', () => {
       messages: [],
       undecodable: 0,
     })
+  })
+
+  it('keeps a caption next to an attachment placeholder', () => {
+    const { messages } = normalizeRows([row({ id: 1, text: '￼ nice pic', hasAttachment: 1 })])
+    expect(messages[0]).toMatchObject({ text: 'nice pic', hasAttachment: true })
+  })
+
+  it('keeps only the last add when a reaction is re-added after removal', () => {
+    const { messages } = normalizeRows([
+      row({ id: 1 }),
+      row({ id: 2, text: null, assocType: 2003, assocGuid: 'p:0/G1' }),
+      row({ id: 3, text: null, assocType: 3003, assocGuid: 'p:0/G1' }),
+      row({ id: 4, text: null, assocType: 2003, assocGuid: 'p:0/G1' }),
+    ])
+    expect(messages.map((m) => m.id)).toEqual([1, 4])
+  })
+
+  it('ignores a removal with no earlier add', () => {
+    expect(normalizeRows([row({ id: 1, text: null, assocType: 3003, assocGuid: 'p:0/G1' })])).toEqual({
+      messages: [],
+      undecodable: 0,
+    })
+  })
+
+  it('keeps different reaction types from the same sender on the same target', () => {
+    const { messages } = normalizeRows([
+      row({ id: 1, text: null, assocType: 2000, assocGuid: 'p:0/G9' }),
+      row({ id: 2, text: null, assocType: 2003, assocGuid: 'p:0/G9' }),
+    ])
+    expect(messages.map((m) => m.reactionType)).toEqual(['love', 'laugh'])
+  })
+
+  it('cancels my own reaction removal', () => {
+    const { messages } = normalizeRows([
+      row({ id: 1, text: null, isFromMe: 1, handle: null, assocType: 2000, assocGuid: 'p:0/G9' }),
+      row({ id: 2, text: null, isFromMe: 1, handle: null, assocType: 3000, assocGuid: 'p:0/G9' }),
+    ])
+    expect(messages).toEqual([])
+  })
+
+  it('cancels an emoji reaction removal', () => {
+    const { messages } = normalizeRows([
+      row({ id: 1, text: null, assocType: 2006, assocGuid: 'p:0/G9', assocEmoji: '🔥' }),
+      row({ id: 2, text: null, assocType: 3006, assocGuid: 'p:0/G9', assocEmoji: '🔥' }),
+    ])
+    expect(messages).toEqual([])
+  })
+
+  it('ignores a removal with an unknown code', () => {
+    const { messages } = normalizeRows([
+      row({ id: 1, text: null, assocType: 2003, assocGuid: 'p:0/G9' }),
+      row({ id: 2, text: null, assocType: 3007, assocGuid: 'p:0/G9' }),
+    ])
+    expect(messages.map((m) => m.id)).toEqual([1])
+  })
+
+  it('treats reactions to different parts of one message separately', () => {
+    const { messages } = normalizeRows([
+      row({ id: 1 }),
+      row({ id: 2, text: null, assocType: 2003, assocGuid: 'p:0/G1' }),
+      row({ id: 3, text: null, assocType: 2003, assocGuid: 'p:1/G1' }),
+      row({ id: 4, text: null, assocType: 3003, assocGuid: 'p:0/G1' }),
+    ])
+    expect(messages.slice(1).map((m) => m.id)).toEqual([3])
   })
 })

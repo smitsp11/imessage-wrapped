@@ -28,12 +28,12 @@ const REMOVE_BASE = 3000
 
 /** Rows must be sorted by time so removals come after the reactions they cancel. */
 export function normalizeRows(rows: MessageRow[]): NormalizeResult {
-  const out: (Message | null)[] = []
+  const out: (Message | null)[] = [] // null marks a reaction that was later removed; filtered out at the end
   const activeReactions = new Map<string, number>()
   let undecodable = 0
 
   for (const row of rows) {
-    const senderId = row.isFromMe ? 'me' : (row.handle ?? 'unknown')
+    const senderId = row.isFromMe === 1 ? 'me' : (row.handle ?? 'unknown')
     const assocType = row.assocType ?? 0
 
     if (assocType !== 0) {
@@ -42,7 +42,7 @@ export function normalizeRows(rows: MessageRow[]): NormalizeResult {
       if (!reactionType || !row.assocGuid) continue // stickers and other non-reaction links
 
       const target = stripPartPrefix(row.assocGuid)
-      const key = `${senderId}|${target}|${reactionType}`
+      const key = `${senderId}|${row.assocGuid}|${reactionType}`
       if (removal) {
         const index = activeReactions.get(key)
         if (index !== undefined) out[index] = null
@@ -59,7 +59,7 @@ export function normalizeRows(rows: MessageRow[]): NormalizeResult {
       continue
     }
 
-    const text = cleanText(row.text ?? decodeAttributedBody(row.body))
+    const text = cleanText(row.text || decodeAttributedBody(row.body))
     if (text === null && !row.hasAttachment) {
       if (row.body) undecodable++
       continue
