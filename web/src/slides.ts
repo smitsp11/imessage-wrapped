@@ -70,7 +70,7 @@ export function buildSlides(wrap: Wrap): Slide[] {
     html: `<p class="kicker">${isGroup ? 'Group Chat Wrapped' : 'Your Texts Wrapped'} · ${year}</p>
       <h1>${escapeHtml(wrap.title)}</h1>
       <p class="big">${wrap.volume.total.toLocaleString('en-US')}</p><p>messages</p>
-      <p class="hint">Tap or press → to continue</p>`,
+      <p class="hint"><span class="touch">Tap to continue</span><span class="pointer">Click or press → to continue</span></p>`,
   })
 
   // Solo: you are in every chat, so "who you text the most" leaves you out.
@@ -155,7 +155,10 @@ function wordsSlide(wrap: Wrap): Slide | null {
     .slice(0, 5)
     .map((w) => `<li>${escapeHtml(w.word)} <small>${w.count.toLocaleString('en-US')}</small></li>`)
     .join('')
+  const sent = (id: string) => (Object.hasOwn(wrap.volume.byPerson, id) ? wrap.volume.byPerson[id]! : 0)
+  // Over the cap, keep the people who sent the most messages (the sort is stable, so ties keep their order).
   const signature = Object.entries(signatureWordByPerson)
+    .sort(([a], [b]) => sent(b) - sent(a))
     .slice(0, MAX_SIGNATURES)
     .map(([id, word]) => {
       const who = id === 'me' ? 'You say' : `${escapeHtml(personName(wrap, id))} says`

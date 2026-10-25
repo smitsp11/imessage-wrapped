@@ -31,14 +31,14 @@ body {
   position: absolute; inset: 0; padding: 72px 28px 40px;
   display: flex; flex-direction: column; justify-content: safe center; gap: 12px;
   background: linear-gradient(160deg, var(--card-a), var(--card-b));
-  border-radius: 16px; overflow-y: auto; overflow-wrap: anywhere;
+  border-radius: 16px; overflow-y: auto; overflow-wrap: anywhere; hyphens: auto;
 }
 .landing { cursor: default; }
 @media (max-width: 500px) {
   #app { --card-h: 100dvh; width: 100vw; }
   .slide { border-radius: 0; }
 }
-.progress { position: absolute; top: 14px; left: 14px; right: 14px; display: flex; gap: 4px; z-index: 1; }
+.progress { position: absolute; top: max(14px, env(safe-area-inset-top)); left: 14px; right: 14px; display: flex; gap: 4px; z-index: 1; }
 .progress span { flex: 1; height: 3px; border-radius: 2px; background: rgba(255, 255, 255, 0.3); }
 .progress .done { background: var(--fg); }
 h1 { font-size: clamp(28px, 10cqw, 40px); line-height: 1.05; margin: 0; letter-spacing: -0.02em; }
@@ -46,6 +46,11 @@ h2 { font-size: 28px; margin: 0 0 8px; letter-spacing: -0.01em; }
 p { margin: 0; color: var(--muted); }
 .kicker, .label { text-transform: uppercase; letter-spacing: 0.12em; font-size: 13px; font-weight: 600; }
 .hint { font-size: 14px; opacity: 0.7; }
+.hint .touch { display: none; }
+@media (pointer: coarse) {
+  .hint .touch { display: inline; }
+  .hint .pointer { display: none; }
+}
 .big { font-size: clamp(32px, 12cqw, 56px); font-weight: 800; color: var(--fg); line-height: 1; }
 .emoji { font-size: 44px; }
 .bars, .words, .signature { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }

@@ -71,6 +71,16 @@ describe('buildSlides', () => {
     expect(html).not.toContain('word6')
   })
 
+  it('keeps the 6 biggest senders when capping signature words', () => {
+    const wrap = makeFakeWrap('group')
+    const ids = Array.from({ length: 8 }, (_, n) => `p${n}`)
+    wrap.words.signatureWordByPerson = Object.fromEntries(ids.map((id, n) => [id, `word${n}`]))
+    wrap.volume.byPerson = Object.fromEntries(ids.map((id, n) => [id, n === 7 ? 1000 : n === 0 ? 1 : 10]))
+    const html = slideHtml(wrap, 'words')
+    expect(html).toContain('word7')
+    expect(html).not.toContain('word0')
+  })
+
   it('says "You say" for your own signature word', () => {
     const wrap = makeFakeWrap('group')
     wrap.words.signatureWordByPerson = { me: 'omw', p1: 'lol' }
