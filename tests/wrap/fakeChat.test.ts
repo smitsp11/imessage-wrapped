@@ -75,4 +75,12 @@ describe('the fake "Pasta Gang" chat', () => {
       for (const p of Object.values(FAKE_PEOPLE)) expect(json).not.toContain(p.handle)
     }
   })
+
+  it('uses only your own words in a solo wrap', () => {
+    const solo = makeFakeWrap('solo')
+    const words = solo.words.topWords.map((w) => w.word)
+    for (const theirs of ['sorry', 'bet', 'pasta']) expect(words).not.toContain(theirs)
+    expect(words).toContain('omw')
+    expect(solo.words.topEmoji.map((e) => e.emoji)).not.toContain('🍝')
+  })
 })

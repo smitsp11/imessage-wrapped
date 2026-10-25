@@ -41,6 +41,8 @@ export function buildWrap(all: Message[], options: BuildOptions): Wrap {
   // Phone numbers and emails never leave this function: people become "me", "p1", "p2"…
   // Solo wraps keep only your top contacts; everyone else is one person.
   const solo = options.mode === 'solo'
+  // Grouping several people as one means reactions and replies between two of them aren't counted in solo stats;
+  // that only affects "Everyone else", who never wins awards.
   const kept = solo ? topContacts(inPeriod) : null
   const grouped = kept ? inPeriod.map((m) => (m.senderId === 'me' || kept.has(m.senderId) ? m : { ...m, senderId: OTHERS_HANDLE })) : inPeriod
   const ids = assignPersonIds(grouped)

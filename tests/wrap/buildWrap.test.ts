@@ -83,7 +83,11 @@ describe('buildWrap', () => {
       const theirs = out.filter((m) => m.senderId === handles[6])[0]!
       const hit = mine[0]!
       return [...out, ...mine, react(handles[5]!, hit, 'love', '2026-03-02T11:00:00Z'), react(handles[6]!, hit, 'laugh', '2026-03-02T11:01:00Z'),
-        react('me', theirs, 'love', '2026-03-02T11:02:00Z'), react(handles[0]!, theirs, 'love', '2026-03-02T11:03:00Z')]
+        react('me', theirs, 'love', '2026-03-02T11:02:00Z'), react(handles[0]!, theirs, 'love', '2026-03-02T11:03:00Z'),
+        // the two collapsed contacts give the most reactions between them: "Everyone else" would win Hype Man
+        // (one reactor per message, so none becomes a greatest hit)
+        ...[1, 2, 3].map((i) => react(handles[5]!, mine[i]!, 'love', `2026-03-02T11:1${i}:00Z`)),
+        ...[4, 5, 6].map((i) => react(handles[6]!, mine[i]!, 'like', `2026-03-02T11:2${i}:00Z`))]
     }
     const solo = buildWrap(messages(), { mode: 'solo', title: 'Test', ...period, nameFor: (h) => `Name ${h.slice(-1)}` })
 
@@ -94,7 +98,13 @@ describe('buildWrap', () => {
     })
 
     it('never gives an award to "Everyone else"', () => {
+      expect(solo.awards.some((a) => a.id === 'hype')).toBe(false)
       expect(solo.awards.some((a) => a.personId === 'others')).toBe(false)
+      // control: the same messages with the two collapsed contacts as one person do give them Hype Man
+      const merged = messages().map((m) => (m.senderId === handles[5] || m.senderId === handles[6] ? { ...m, senderId: handles[5]! } : m))
+      const group = buildWrap(merged, { mode: 'group', title: 'Test', ...period, nameFor: (h) => `Name ${h.slice(-1)}` })
+      const hype = group.awards.find((a) => a.id === 'hype')
+      expect(hype && group.people[hype.personId]).toBe('Name 5')
     })
 
     it('keeps only your own messages as greatest hits, counting everyone\'s reactions', () => {
