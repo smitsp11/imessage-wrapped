@@ -6,6 +6,8 @@ type Row = { name: string; value: number }
 
 const MAX_BARS = 6
 const MAX_QUOTES = 3
+/** the smallest bar stays visible */
+const MIN_BAR_PERCENT = 2
 /** a median over a handful of replies says little, so fewer than this don't make the fastest-replies list */
 const MIN_REPLIES_FOR_FASTEST = 5
 /** the id buildWrap gives the solo "Everyone else" bucket */
@@ -39,13 +41,13 @@ function bars(
   const largest = Math.max(...shown.map((r) => r.value), 1)
   const smallest = Math.min(...shown.map((r) => r.value))
   const width = (value: number) => {
-    if (scale === 'largest') return (value / largest) * 100
-    return value <= 0 ? 100 : (smallest / value) * 100
+    const raw = scale === 'largest' ? (value / largest) * 100 : value <= 0 ? 100 : (smallest / value) * 100
+    return Math.min(100, Math.max(MIN_BAR_PERCENT, raw))
   }
   const items = shown.map(
     (r) =>
       `<li><span class="name">${escapeHtml(r.name)}</span>` +
-      `<span class="bar" style="--w:${Math.max(0, Math.round(width(r.value)))}%"></span>` +
+      `<span class="bar" style="--w:${Math.round(width(r.value))}%"></span>` +
       `<span class="value">${escapeHtml(format(r.value))}</span></li>`,
   )
   return `<ol class="bars">${items.join('')}</ol>`
@@ -71,20 +73,23 @@ export function buildSlides(wrap: Wrap): Slide[] {
 
   // Solo: you are in every chat, so "who you text the most" leaves you out.
   const volumeRows = ranked(wrap.volume.byPerson, 'desc', isGroup ? [] : ['me'])
-  slides.push({
-    id: 'volume',
-    html: `<h2>${isGroup ? 'Who talked the most' : 'Who you text the most'}</h2>${bars(volumeRows)}`,
-  })
+  if (volumeRows.length > 0) {
+    slides.push({
+      id: 'volume',
+      html: `<h2>${isGroup ? 'Who talked the most' : 'Who you text the most'}</h2>${bars(volumeRows)}`,
+    })
+  }
 
   if (wrap.topChats.length > 0) {
     const rows = wrap.topChats.map((c) => ({ name: c.name, value: c.messages }))
     slides.push({ id: 'top-chats', html: `<h2>Your top chats</h2>${bars(rows)}` })
   }
 
-  const peak = Math.max(...wrap.timing.byHour, 1)
+  const top = Math.max(...wrap.timing.byHour)
+  const peak = Math.max(top, 1)
   slides.push({
     id: 'hours',
-    html: `<h2>Peak hour</h2><p class="big">${hourLabel(wrap.timing.byHour.indexOf(peak))}</p>
+    html: `<h2>Peak hour</h2><p class="big">${hourLabel(wrap.timing.byHour.indexOf(top))}</p>
       <div class="hours" aria-hidden="true">${wrap.timing.byHour
         .map((n) => `<span style="--h:${Math.max(0, Math.round((n / peak) * 100))}%"></span>`)
         .join('')}</div>`,

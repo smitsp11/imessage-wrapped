@@ -160,6 +160,27 @@ describe('buildSlides', () => {
   })
 })
 
+describe('buildSlides edge cases', () => {
+  it('does not render a negative hour when byHour is all zero', () => {
+    const wrap = makeFakeWrap('group')
+    wrap.timing.byHour = new Array(24).fill(0)
+    expect(slideHtml(wrap, 'hours')).not.toContain('-1')
+  })
+
+  it('keeps a visible sliver for the smallest bar', () => {
+    const wrap = makeFakeWrap('group')
+    wrap.volume.byPerson = { p1: 1000, p2: 1 }
+    const widths = [...slideHtml(wrap, 'volume').matchAll(/--w:([\d.]+)%/g)].map((m) => Number(m[1]))
+    expect(widths).toEqual([100, 2])
+  })
+
+  it('skips the volume slide when there is nobody to show', () => {
+    const wrap = makeFakeWrap('solo')
+    wrap.volume.byPerson = { me: 50 }
+    expect(buildSlides(wrap).map((s) => s.id)).not.toContain('volume')
+  })
+})
+
 function slideHtml(wrap: ReturnType<typeof makeFakeWrap>, id: string): string {
   return buildSlides(wrap).find((s) => s.id === id)!.html
 }
