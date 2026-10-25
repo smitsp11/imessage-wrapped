@@ -15,9 +15,20 @@ it('counts reactions given and received, skipping self-reactions and missing tar
     msg({ senderId: 'sam', sentAt: '2026-01-01T10:06:00Z', text: null, reactsToGuid: 'gone', reactionType: 'like' }),
   ])
   expect(stats).toEqual({
-    givenByPerson: { sam: 2, me: 2, alex: 1 },
+    // my love on my own message doesn't count: not given, not in byType
+    givenByPerson: { sam: 2, me: 1, alex: 1 },
     receivedByPerson: { alex: 2, me: 1 },
     laughsReceivedByPerson: { alex: 2 },
-    byType: { laugh: 2, love: 2, like: 1 },
+    byType: { laugh: 2, love: 1, like: 1 },
   })
+})
+
+it('counts emoji tapbacks by type', () => {
+  const a = msg({ senderId: 'alex', sentAt: '2026-01-01T10:00:00Z' })
+  const stats = reactionStats([a, react('sam', a, 'emoji', '2026-01-01T10:01:00Z')])
+  expect(stats.byType).toEqual({ emoji: 1 })
+})
+
+it('returns empty records for no messages', () => {
+  expect(reactionStats([])).toEqual({ givenByPerson: {}, receivedByPerson: {}, laughsReceivedByPerson: {}, byType: {} })
 })
