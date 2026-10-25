@@ -5,6 +5,7 @@ import path from 'node:path'
 /**
  * Copies a SQLite file and its -wal/-shm companions into a new temp folder,
  * so we never read (or lock) the live file. On APFS the copy is an instant clone.
+ * Small race: Messages could checkpoint between cloning chat.db and its -wal. It is rare, and running again fixes it.
  */
 export function copyDatabase(sourcePath: string): { path: string; dir: string } {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'wrapped-'))

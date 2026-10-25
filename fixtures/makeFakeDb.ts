@@ -42,6 +42,7 @@ export function makeFakeDb(dir: string): FakeDb {
   const dbPath = path.join(dir, 'chat.db')
   const db = new Database(dbPath)
   try {
+    db.pragma('journal_mode = WAL') // Messages uses WAL
     db.exec(SCHEMA)
 
     const insertHandle = db.prepare('INSERT INTO handle (id, service) VALUES (?, ?)')

@@ -19,7 +19,7 @@ const CHATS_SQL = `
     (SELECT GROUP_CONCAT(h.id, char(31)) FROM chat_handle_join chj
        JOIN handle h ON h.ROWID = chj.handle_id WHERE chj.chat_id = c.ROWID) AS members
   FROM chat c
-  ORDER BY messageCount DESC`
+  ORDER BY messageCount DESC, c.ROWID`
 
 type ChatRow = { id: number; name: string; style: number; messageCount: number; members: string | null }
 
@@ -30,6 +30,7 @@ export class MessagesDb {
   private constructor(
     private readonly db: Database.Database,
     private readonly tempDir: string,
+    private readonly hasEmoji: boolean,
   ) {}
 
   static open(sourcePath: string = DEFAULT_CHAT_DB): MessagesDb {
@@ -42,7 +43,19 @@ export class MessagesDb {
       if (code === 'EPERM' || code === 'EACCES') throw new NoFullDiskAccessError()
       throw err
     }
-    return new MessagesDb(new Database(copy.path, { readonly: true }), copy.dir)
+    let db: Database.Database | undefined
+    try {
+      db = new Database(copy.path, { readonly: true })
+      // Older macOS has no associated_message_emoji (it came with emoji tapbacks).
+      const columns = db.pragma('table_info(message)') as { name: string }[]
+      const hasEmoji = columns.some((c) => c.name === 'associated_message_emoji')
+      db.prepare(CHATS_SQL) // fails here, not later, if this isn't a Messages database
+      return new MessagesDb(db, copy.dir, hasEmoji)
+    } catch (err) {
+      db?.close()
+      fs.rmSync(copy.dir, { recursive: true, force: true })
+      throw err
+    }
   }
 
   listChats(): Chat[] {
@@ -56,15 +69,19 @@ export class MessagesDb {
     }))
   }
 
-  /** Real messages (item_type 0) in [from, to), oldest first. */
+  /**
+   * Real messages (item_type 0) in [from, to), oldest first.
+   * A message joined to two chats comes back once per chat (rare; only matters without chatIds).
+   */
   messageRows({ chatIds, from, to }: RowQuery): MessageRow[] {
     if (chatIds && chatIds.length === 0) return []
     const chatFilter = chatIds ? `AND j.chat_id IN (${chatIds.map(() => '?').join(', ')})` : ''
     const sql = `
       SELECT m.ROWID AS id, m.guid AS guid, j.chat_id AS chatId, m.is_from_me AS isFromMe, h.id AS handle,
-        m.date / 1000000 AS dateMs, m.text AS text, m.attributedBody AS body,
+        m.date / 1000000 AS dateMs, m.text AS text,
+        CASE WHEN m.text IS NULL OR m.text = '' THEN m.attributedBody END AS body,
         m.cache_has_attachments AS hasAttachment, m.associated_message_guid AS assocGuid,
-        m.associated_message_type AS assocType, m.associated_message_emoji AS assocEmoji
+        m.associated_message_type AS assocType, ${this.hasEmoji ? 'm.associated_message_emoji' : 'NULL'} AS assocEmoji
       FROM message m
       JOIN chat_message_join j ON j.message_id = m.ROWID
       LEFT JOIN handle h ON h.ROWID = m.handle_id
@@ -74,7 +91,10 @@ export class MessagesDb {
   }
 
   close(): void {
-    this.db.close()
-    fs.rmSync(this.tempDir, { recursive: true, force: true })
+    try {
+      this.db.close()
+    } finally {
+      fs.rmSync(this.tempDir, { recursive: true, force: true })
+    }
   }
 }
