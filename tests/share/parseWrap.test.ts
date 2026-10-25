@@ -46,6 +46,7 @@ describe('parseWrap', () => {
   it('refuses non-objects and unknown versions with the right error', () => {
     expect(() => parseWrap(null)).toThrow(BrokenLinkError)
     expect(() => parseWrap({ version: 2 })).toThrow(NewerVersionError)
+    expect(() => parseWrap({ version: 0 })).toThrow(BrokenLinkError)
     expect(() => parseWrap({ version: 'two' })).toThrow(BrokenLinkError)
   })
 })

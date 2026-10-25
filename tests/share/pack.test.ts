@@ -15,6 +15,12 @@ function noise(seed: number, length: number): string {
   return out
 }
 
+async function deflateToBase64Url(bytes: Uint8Array<ArrayBuffer>): Promise<string> {
+  const stream = new Blob([bytes]).stream().pipeThrough(new CompressionStream('deflate-raw'))
+  const deflated = new Uint8Array(await new Response(stream).arrayBuffer())
+  return btoa(String.fromCharCode(...deflated)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
+}
+
 describe('share links', () => {
   const wrap = makeFakeWrap('group')
 
@@ -49,17 +55,32 @@ describe('share links', () => {
   describe('untrusted links', () => {
     const packAny = (value: unknown) => packWrap(value as Wrap)
 
-    it('rejects unusable links with BrokenLinkError', async () => {
-      const packed = await packWrap(wrap)
-      const broken = [
-        '<script>alert(1)</script>',
-        packed.slice(0, -20),
-        '',
-        'a'.repeat(MAX_LINK_CHARS + 1),
-        await packAny(null),
-        await packAny({ version: 1 }),
-      ]
-      for (const link of broken) await expect(unpackWrap(link)).rejects.toThrow(BrokenLinkError)
+    it('rejects an otherwise valid wrap that is longer than the cap', async () => {
+      const tooLong = await packWrap({ ...wrap, title: noise(1, 14000) })
+      expect(tooLong.length).toBeGreaterThan(MAX_LINK_CHARS)
+      await expect(unpackWrap(tooLong)).rejects.toThrow(BrokenLinkError)
+    })
+
+    it('rejects bytes that are not valid UTF-8, even inside an otherwise valid wrap', async () => {
+      const marker = 'ZZ'
+      const bytes = new TextEncoder().encode(JSON.stringify({ ...wrap, title: marker }))
+      const at = bytes.indexOf(marker.charCodeAt(0))
+      bytes[at] = 0xff // lone 0xFF can never be UTF-8
+      await expect(unpackWrap(await deflateToBase64Url(bytes))).rejects.toThrow(BrokenLinkError)
+    })
+
+    it('rejects a truncated link', async () => {
+      await expect(unpackWrap((await packWrap(wrap)).slice(0, -20))).rejects.toThrow(BrokenLinkError)
+    })
+
+    it.each([
+      ['invalid characters', async () => '<script>alert(1)</script>'],
+      ['an empty link', async () => ''],
+      ['valid characters that are not deflate', async () => 'a'.repeat(MAX_LINK_CHARS + 1)],
+      ['JSON null', () => packAny(null)],
+      ['JSON without the wrap fields', () => packAny({ version: 1 })],
+    ])('rejects %s', async (_label, makeLink) => {
+      await expect(unpackWrap(await makeLink())).rejects.toThrow(BrokenLinkError)
     })
 
     it('says so when the wrap is from a newer version', async () => {
