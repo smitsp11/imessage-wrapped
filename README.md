@@ -6,6 +6,10 @@ Pick a group chat and get a set of story slides: who talks the most, who ghosts,
 
 Everything runs on your Mac. Nothing is uploaded, and there's no AI: every slide is a number counted from your messages.
 
+![Three slides from the demo wrap: who talked the most, the group's vocabulary, and The Ghost award](docs/demo-slides.png)
+
+*From the demo, which uses a made-up group chat.*
+
 There are two kinds of wrap:
 
 - **Group wrap:** one group chat, with stats and awards for everyone in it.
@@ -85,6 +89,15 @@ WRAPPED_SITE=https://your-site.example npm run wrapped -- share out/pasta-gang-2
 
 The site never stores anything. The wrap lives inside the link itself.
 
+## How it works
+
+1. **Copy, then read** (`src/extract`). The tool copies `chat.db` and its `-wal` and `-shm` files to a temp folder and opens the copy read-only, so it never locks or changes the real database. Newer macOS versions often keep message text in a binary `attributedBody` blob instead of the `text` column, and `decodeBody.ts` pulls the text out of it. `normalize.ts` turns rows into messages and reactions, and drops reactions that were later removed.
+2. **Count** (`src/stats`). Each stat is a plain function over the list of messages: volume, timing, reply times, conversation starters, reactions, greatest hits and words.
+3. **Pick awards** (`src/awards/rules.ts`). Each award is one rule over one number, with a minimum sample, and a tie means nobody wins.
+4. **Build the wrap** (`src/wrap/buildWrap.ts`). Phone numbers and emails are replaced with short ids (`me`, `p1`, `p2`…) here, so they never reach the output.
+5. **Share** (`src/share`). The wrap is compressed and base64url-encoded into the part of the link after `#`. The viewer checks the shape of whatever it unpacks (`parseWrap.ts`) before showing it.
+6. **Show** (`web`). A small Vite page with no framework reads the link and turns the wrap into slides. `slides.ts` doesn't touch the DOM, so it's unit-tested.
+
 ## Privacy
 
 - **Your messages stay on your Mac.** The tool reads a temporary copy of the Messages database and deletes it when it's done, even if you press Ctrl-C or close the terminal.
@@ -151,6 +164,7 @@ The tests use a generated fake Messages database with a scripted group chat whos
 | `src/cli.ts` | the `wrapped` commands |
 | `web` | the slide viewer |
 | `fixtures` | the fake database used by the tests and the demo |
+| `docs` | design notes and the screenshot above |
 
 More detail is in [`docs/design.md`](docs/design.md).
 
