@@ -46,7 +46,7 @@ export function buildWrap(all: Message[], options: BuildOptions): Wrap {
   const kept = solo ? topContacts(inPeriod) : null
   const grouped = kept ? inPeriod.map((m) => (m.senderId === 'me' || kept.has(m.senderId) ? m : { ...m, senderId: OTHERS_HANDLE })) : inPeriod
   const ids = assignPersonIds(grouped)
-  const messages = grouped.map((m) => ({ ...m, senderId: ids.get(m.senderId)! }))
+  const messages = relabel(grouped, ids)
   const people: Record<string, string> = {}
   for (const [handle, id] of ids) people[id] = handle === 'me' ? 'You' : handle === OTHERS_HANDLE ? 'Everyone else' : display(handle)
 
@@ -82,6 +82,7 @@ export function buildWrap(all: Message[], options: BuildOptions): Wrap {
   }
 }
 
+/** Swaps each sender's handle for its short id. */
 function relabel(messages: Message[], ids: Map<string, string>): Message[] {
   return messages.map((m) => ({ ...m, senderId: ids.get(m.senderId)! }))
 }
