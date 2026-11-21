@@ -93,7 +93,11 @@ describe('buildSlides', () => {
   it('makes the fastest replier the full bar and lists them first', () => {
     const html = slideHtml(makeFakeWrap('group'), 'replies')
     const widths = [...html.matchAll(/--w:([\d.]+)%/g)].map((m) => Number(m[1]))
-    expect(html.indexOf('Alex Chen')).toBeLessThan(html.indexOf('Sam Rivera'))
+    // Sam joins 4 min in, you 14 min, Jordan 5h 14m. Alex starts every conversation, so is never timed.
+    const order = ['Sam Rivera', 'You', 'Jordan Lee'].map((name) => html.indexOf(name))
+    expect(order.every((i) => i >= 0)).toBe(true)
+    expect(order).toEqual([...order].sort((x, y) => x - y))
+    expect(html).not.toContain('Alex Chen')
     expect(widths[0]).toBe(100)
     expect(widths[widths.length - 1]).toBeLessThan(100)
   })
