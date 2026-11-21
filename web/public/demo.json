@@ -89,16 +89,14 @@
   "replies": {
     "medianReplyMinutesByPerson": {
       "p2": 4,
-      "me": 10,
-      "p3": 300,
-      "p1": 1,
-      "p4": 5
+      "me": 14,
+      "p3": 314,
+      "p4": 320
     },
     "repliesByPerson": {
-      "p2": 36,
+      "p2": 60,
       "me": 60,
       "p3": 60,
-      "p1": 30,
       "p4": 6
     }
   },
@@ -220,8 +218,8 @@
       "id": "ghost",
       "title": "The Ghost",
       "personId": "p3",
-      "value": 300,
-      "label": "median reply 5h 0m"
+      "value": 314,
+      "label": "median reply 5h 14m"
     },
     {
       "id": "starter",

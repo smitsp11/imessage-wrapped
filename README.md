@@ -94,7 +94,7 @@ The site never stores anything. The wrap lives inside the link itself.
 ## How it works
 
 1. **Copy, then read** (`src/extract`). The tool copies `chat.db` and its `-wal` and `-shm` files to a temp folder and opens the copy read-only, so it never locks or changes the real database. Newer macOS versions often keep message text in a binary `attributedBody` blob instead of the `text` column, and `decodeBody.ts` pulls the text out of it. `normalize.ts` turns rows into messages and reactions, and drops reactions that were later removed.
-2. **Count** (`src/stats`). Each stat is a plain function over the list of messages: volume, timing, reply times, conversation starters, reactions, greatest hits and words.
+2. **Count** (`src/stats`). Each stat is a plain function over the list of messages: volume, timing, reply times, conversation starters, reactions, greatest hits and words. A conversation ends after 6 quiet hours, and a reply time is how long someone takes to join a conversation someone else started.
 3. **Pick awards** (`src/awards/rules.ts`). Each award is one rule over one number, with a minimum sample, and a tie means nobody wins.
 4. **Build the wrap** (`src/wrap/buildWrap.ts`). Phone numbers and emails are replaced with short ids (`me`, `p1`, `p2`…) here, so they never reach the output.
 5. **Share** (`src/share`). The wrap is compressed and base64url-encoded into the part of the link after `#`. The viewer checks the shape of whatever it unpacks (`parseWrap.ts`) before showing it.
@@ -120,7 +120,7 @@ Each award comes from one number. To keep it fair:
 | Award | Goes to | Minimum |
 |---|---|---|
 | Main Character | the biggest share of messages | none |
-| The Ghost | the slowest typical reply | 1 hour, over at least 10 replies |
+| The Ghost | the slowest median time to join a conversation | 1 hour, over at least 10 conversations joined |
 | The Starter | the most conversations started | 3 |
 | The Comedian | the most laughs received per message | 1 laugh per 100 messages |
 | Hype Man | the most reactions given | 3 |
@@ -154,7 +154,7 @@ npx playwright install chromium   # once
 npm run e2e                       # browser tests, desktop and phone sizes
 ```
 
-The tests use a generated fake Messages database with a scripted group chat whose answers are known in advance (for example, Jordan's typical reply is exactly 5 hours). No real messages are in this repo. Any command accepts `--db <path>` to read a different database file.
+The tests use a generated fake Messages database with a scripted group chat whose answers are known in advance (for example, Jordan always joins the evening's conversation 5h 14m after it starts). No real messages are in this repo. Any command accepts `--db <path>` to read a different database file.
 
 | Folder | What it does |
 |---|---|

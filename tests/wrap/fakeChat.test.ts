@@ -26,7 +26,7 @@ describe('the fake "Pasta Gang" chat', () => {
   it('gives the expected awards', () => {
     expect(wrap.awards.map((a) => [a.id, nameOf(wrap, a.personId), a.value])).toEqual([
       ['main-character', 'Alex Chen', 29.8],
-      ['ghost', 'Jordan Lee', 300],
+      ['ghost', 'Jordan Lee', 314], // joins each evening 5h 14m after Alex's 20:00 opener
       ['starter', 'Alex Chen', 60],
       ['comedian', 'Alex Chen', 70],
       ['hype', 'Sam Rivera', 61],

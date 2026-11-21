@@ -1,5 +1,5 @@
 import { expect, it } from 'vitest'
-import { byCountThenKey, median, threads } from '../../src/stats/conversation'
+import { NEW_CONVERSATION_GAP, byCountThenKey, conversations, median, threads } from '../../src/stats/conversation'
 import { msg, react } from '../../fixtures/messages'
 
 it('median handles odd and even counts and rejects empty input', () => {
@@ -24,4 +24,13 @@ it('byCountThenKey sorts by count, highest first, then by key, for a Map or a pl
   const expected = ['jordan', 'alex', 'sam', 'riley']
   expect([...keys].sort(byCountThenKey(counts))).toEqual(expected)
   expect([...keys].sort(byCountThenKey(new Map(Object.entries(counts))))).toEqual(expected)
+})
+
+it('conversations splits each chat at a quiet gap of at least 6 hours, and never across chats', () => {
+  const t = (ms: number) => new Date(Date.parse('2026-01-01T10:00:00Z') + ms).toISOString()
+  const a = msg({ senderId: 'alex', chatId: 1, sentAt: t(0) })
+  const b = msg({ senderId: 'me', chatId: 1, sentAt: t(NEW_CONVERSATION_GAP - 1) }) // just under the gap: same one
+  const c = msg({ senderId: 'sam', chatId: 1, sentAt: t(2 * NEW_CONVERSATION_GAP - 1) }) // exactly the gap after b: a new one
+  const d = msg({ senderId: 'me', chatId: 2, sentAt: t(1) })
+  expect(conversations([c, d, react('sam', a, 'laugh', t(2)), b, a])).toEqual([[a, b], [c], [d]])
 })

@@ -86,10 +86,12 @@ Reactions are rows in `message` with `associated_message_type` 2000–2006 (adde
 |---|---|
 | Volume | total messages; each person's share; attachments sent |
 | Timing | heatmaps by month, weekday and hour (computed; the slides show the hour chart); longest daily streak; longest silence; share sent 12–5 AM |
-| Replies | median reply time per person (only replies within 12 h count) |
+| Replies | median time each person takes to join a conversation someone else started, timed from its first message (only joins within 12 h count) |
 | Starters | who sends the first message after a gap of 6 h or more; double texts (2+ in a row with no reply for 10 min) |
 | Reactions | given and received per person and type; most-reacted messages (greatest hits) |
 | Words | top emoji; top words (stopwords removed); each person's signature word (most over-used compared with the rest of the group, by a smoothed log ratio of their rate vs everyone else's); longest message |
+
+Reply times count joining, not turn-taking. In a busy group chat everyone's messages land seconds after someone else's, so timing every change of speaker gives near-zero numbers. Instead each chat is split into conversations (6 quiet hours ends one, the same rule as conversation starts), and each person's first message in a conversation someone else started is their reply, timed from its first message.
 
 Solo mode uses the same functions over all your chats. It keeps you and the 5 contacts who sent the most messages; everyone else is grouped as 'Everyone else'. Word stats and greatest hits use only your own messages, and awards never go to 'Everyone else' (it is excluded before ranking, so the best real contact wins instead).
 
@@ -102,7 +104,7 @@ Each award comes from one stat, compared unrounded. A person needs at least 50 m
 | Award | Rule | Floor |
 |---|---|---|
 | Main Character | largest share of messages | none |
-| The Ghost | slowest median reply (at least 10 replies) | 60 min |
+| The Ghost | slowest median reply (at least 10 conversations joined) | 60 min |
 | The Starter | most conversation starts | 3 |
 | The Comedian | most Haha reactions received per message | 1 per 100 messages |
 | Hype Man | most reactions given | 3 |
@@ -148,7 +150,7 @@ wrapped demo [--out file]             build a wrap from the fake database (no Fu
 
 ## Testing
 
-- **Fake database:** `fixtures/makeFakeDb.ts` builds a `chat.db` with Apple's real table and column names (`message`, `handle`, `chat`, `chat_message_join`, `chat_handle_join`) and scripted fake friends with known answers. Examples: "Jordan's median reply is exactly 5 hours," "Sam laughs at Alex's opener every evening." It's generated at test time and never committed.
+- **Fake database:** `fixtures/makeFakeDb.ts` builds a `chat.db` with Apple's real table and column names (`message`, `handle`, `chat`, `chat_message_join`, `chat_handle_join`) and scripted fake friends with known answers. Examples: "Jordan always joins the evening's conversation 5h 14m after it starts," "Sam laughs at Alex's opener every evening." It's generated at test time and never committed.
 - **Messages that count:** only rows with `item_type = 0` (real messages, not "X named the conversation" events), and only rows with text or an attachment.
 - **Unit tests:** every stat and award function is tested against hand-built `Message[]` inputs with exact expected values.
 - **Integration test:** fake db → `MessagesDb` → `buildWrap` → expected Wrap.

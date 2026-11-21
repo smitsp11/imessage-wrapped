@@ -3,6 +3,8 @@ import type { Message } from '../types'
 export const MINUTE = 60_000
 export const HOUR = 60 * MINUTE
 export const DAY = 24 * HOUR
+/** After 6 quiet hours, the next message starts a new conversation. */
+export const NEW_CONVERSATION_GAP = 6 * HOUR
 
 /** Real messages only (no reactions). */
 export function contentMessages(messages: Message[]): Message[] {
@@ -18,6 +20,27 @@ export function threads(messages: Message[]): Message[][] {
     byChat.set(m.chatId, list)
   }
   return [...byChat.values()].map((list) => list.sort((a, b) => a.sentAt.getTime() - b.sentAt.getTime()))
+}
+
+/**
+ * Each chat's content messages split into conversations, oldest first within each.
+ * A new conversation begins at the first message after NEW_CONVERSATION_GAP or more of quiet in that chat.
+ */
+export function conversations(messages: Message[]): Message[][] {
+  const result: Message[][] = []
+  for (const thread of threads(messages)) {
+    let current: Message[] = []
+    for (const m of thread) {
+      const previous = current[current.length - 1]
+      if (previous && m.sentAt.getTime() - previous.sentAt.getTime() >= NEW_CONVERSATION_GAP) {
+        result.push(current)
+        current = []
+      }
+      current.push(m)
+    }
+    if (current.length > 0) result.push(current)
+  }
+  return result
 }
 
 /** Counts a key in a Map. */
