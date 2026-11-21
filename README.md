@@ -4,7 +4,7 @@ Spotify Wrapped for your iMessage group chats.
 
 Pick a group chat and get a set of story slides: who talks the most, who ghosts, who starts every conversation, the chat's greatest hits (ranked by the reactions you all already gave), and awards like The Ghost, Night Owl and Double Texter. Then send your friends a link. They tap through it on any phone, no app needed.
 
-Everything runs on your Mac. Nothing is uploaded, and there's no AI: every slide is a number counted from your messages.
+Everything runs on your Mac. Nothing is uploaded, and the tool itself uses no AI models: every slide is a number counted from your messages.
 
 ![Three slides from the demo wrap: who talked the most, the group's vocabulary, and The Ghost award](docs/demo-slides.png)
 
