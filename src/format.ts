@@ -1,5 +1,8 @@
-/** "4 min", "5h 0m", or past a day "1d 1h" (minutes dropped). */
+/** "<10 sec", "40 sec", "4 min", "5h 0m", or past a day "1d 1h" (minutes dropped). */
 export function formatMinutes(minutes: number): string {
+  const seconds = Math.round(minutes * 60)
+  if (seconds < 10) return '<10 sec'
+  if (seconds < 60) return `${seconds} sec`
   const total = Math.round(minutes)
   if (total < 60) return `${total} min`
   const days = Math.floor(total / 1440)

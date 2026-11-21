@@ -87,6 +87,14 @@ it('never crosses chats: each chat has its own conversations', () => {
   expect(stats).toEqual({ medianReplyMinutesByPerson: { me: 9, sam: 2 }, repliesByPerson: { me: 1, sam: 1 } })
 })
 
+it('keeps a median under a minute to the second (0.01 min)', () => {
+  const stats = replyStats([
+    msg({ senderId: 'alex', sentAt: at(0) }),
+    msg({ senderId: 'sam', sentAt: at(41 * 1000) }), // 41 s
+  ])
+  expect(stats.medianReplyMinutesByPerson.sam).toBe(0.68) // 41 / 60 = 0.6833…, rounded to 0.01
+})
+
 it('ignores reactions: reacting is not joining', () => {
   const first = msg({ senderId: 'alex', sentAt: at(0) })
   const stats = replyStats([first, react('sam', first, 'love', at(MINUTE)), msg({ senderId: 'sam', sentAt: at(5 * MINUTE) })])

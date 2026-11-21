@@ -102,6 +102,14 @@ describe('buildSlides', () => {
     expect(widths[widths.length - 1]).toBeLessThan(100)
   })
 
+  it('shows a reply under a minute in seconds, not "0 min"', () => {
+    const wrap = makeFakeWrap('group')
+    wrap.replies.medianReplyMinutesByPerson.p2 = 0.67
+    const html = slideHtml(wrap, 'replies')
+    expect(html).toContain('40 sec')
+    expect(html).not.toContain('0 min')
+  })
+
   it('leaves people with fewer than 5 replies out of fastest replies', () => {
     const wrap = makeFakeWrap('group')
     wrap.replies.medianReplyMinutesByPerson.p4 = 0.5

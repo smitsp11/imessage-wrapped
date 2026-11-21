@@ -3,6 +3,12 @@ import { formatMinutes, maskHandle, percent } from '../src/format'
 
 describe('formatMinutes', () => {
   it('shows minutes under an hour', () => expect(formatMinutes(4)).toBe('4 min'))
+  it('shows seconds under a minute instead of "0 min"', () => expect(formatMinutes(0.67)).toBe('40 sec'))
+  it('shows "<10 sec" for anything under 10 seconds, including 0', () => {
+    expect(formatMinutes(0.15)).toBe('<10 sec')
+    expect(formatMinutes(0)).toBe('<10 sec')
+  })
+  it('switches to minutes once the seconds round to 60', () => expect(formatMinutes(0.995)).toBe('1 min'))
   it('shows hours and minutes', () => expect(formatMinutes(300)).toBe('5h 0m'))
   it('shows days and hours past a day', () => expect(formatMinutes(1500)).toBe('1d 1h'))
   it('rounds down before choosing units', () => expect(formatMinutes(59.4)).toBe('59 min'))
