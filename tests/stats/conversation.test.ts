@@ -1,5 +1,5 @@
 import { expect, it } from 'vitest'
-import { median, threads } from '../../src/stats/conversation'
+import { byCountThenKey, median, threads } from '../../src/stats/conversation'
 import { msg, react } from '../../fixtures/messages'
 
 it('median handles odd and even counts and rejects empty input', () => {
@@ -16,4 +16,12 @@ it('threads splits per chat, sorts each by time and drops reactions', () => {
   expect(result).toHaveLength(2)
   expect(result.find((t) => t[0]!.chatId === 1)).toEqual([early, late])
   expect(result.find((t) => t[0]!.chatId === 2)).toEqual([other])
+})
+
+it('byCountThenKey sorts by count, highest first, then by key, for a Map or a plain object', () => {
+  const keys = ['sam', 'alex', 'jordan', 'riley']
+  const counts = { sam: 2, alex: 2, jordan: 5, riley: 1 }
+  const expected = ['jordan', 'alex', 'sam', 'riley']
+  expect([...keys].sort(byCountThenKey(counts))).toEqual(expected)
+  expect([...keys].sort(byCountThenKey(new Map(Object.entries(counts))))).toEqual(expected)
 })
