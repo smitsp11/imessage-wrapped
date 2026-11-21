@@ -4,13 +4,22 @@
 
 Spotify Wrapped for your iMessage group chats.
 
-Pick a group chat and get a set of story slides: who talks the most, who ghosts, who starts every conversation, the chat's greatest hits (ranked by the reactions you all already gave), and awards like The Ghost, Night Owl and Double Texter. Then send your friends a link. They tap through it on any phone, no app needed.
+Pick a group chat and get a set of story slides: who talks the most, who ghosts, who starts every conversation, the chat's greatest hits (ranked by the reactions you all already gave), and awards like The Ghost, Night Owl and Double Texter. Then send your friends a link (once the viewer is hosted, see [Sharing the link](#sharing-the-link)). They tap through it on any phone, no app needed.
 
 Everything runs on your Mac. Nothing is uploaded, and the tool itself uses no AI models: every slide is a number counted from your messages.
 
 ![Three slides from the demo wrap: who talked the most, the group's vocabulary, and The Ghost award](docs/demo-slides.png)
 
 *From the demo, which uses a made-up group chat.*
+
+## The full product
+
+This repo is the original MVP of iMessage Wrapped: a developer CLI and a slide viewer. The product
+grew from it and lives at **[wrapped.smitpatel.xyz](https://wrapped.smitpatel.xyz)**
+([source: smitsp11/wrapped](https://github.com/smitsp11/wrapped)). It has a one-line install for
+any Mac, a page on your Mac where you pick a chat and send the link to the group in one tap, and
+more slides: peak month, texting styles, greatest hits with the conversation around them, and a
+summary card. This repo stays as the MVP; new work happens there.
 
 There are two kinds of wrap:
 
