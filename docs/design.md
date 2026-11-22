@@ -31,7 +31,7 @@ src/
   extract/
     messagesDb.ts       MessagesDb class: copies chat.db, opens it read-only (better-sqlite3), queries chats and messages
     contactBook.ts      ContactBook class: maps phone numbers and emails to names from the macOS AddressBook databases
-    copyDb.ts           copies chat.db (plus -wal and -shm) to a temp file and removes it afterwards
+    copyDb.ts           copies chat.db (plus -wal and -shm) to a temp folder; the caller deletes the copy when done
     decodeBody.ts       pulls plain text out of the `attributedBody` blob when `text` is NULL
     appleTime.ts        converts Apple timestamps (ns since 2001-01-01) to Date
     normalize.ts        database rows → Message[]
@@ -123,14 +123,14 @@ The link carries the wrap itself: `https://<site>/#<packed wrap>`. People appear
 3. The wrap is compressed (deflate via `CompressionStream`, which both Node and browsers have) and base64url-encoded into the part after `#`.
 4. The static site reads the `#` part in the browser. Browsers never send it to a server, so the host stores nothing.
 
-The site is a static Vite build (not deployed yet). There's no backend and no database.
+The site is a static Vite build. This repo doesn't host it (see README, "Sharing the link"); the full product at wrapped.smitpatel.xyz does. There's no backend and no database.
 
 A link may hold at most 8 KB after the `#`. If a wrap is bigger, the CLI drops quotes (lowest reaction count first) until it fits and tells you what was dropped.
 
 ## Commands
 
 ```
-wrapped list                          chats with message counts and members
+wrapped list                          chats with message counts and names
 wrapped group <chat id or name> [--year 2026]  build a group wrap → out/<slug>-<year>.json, open a local preview
 wrapped me [--year 2026]              build a solo wrap → out/me-2026.json, open a local preview
 wrapped share <out/file.json>         review → print the share link
@@ -174,7 +174,9 @@ v1 is the simplest flow: `wrapped list` ranks your chats by activity, you pick o
   - *Making* needs the Messages database. iPhones don't expose it directly. A later path is an unencrypted iPhone backup on Windows/Mac (it holds the same database as `sms.db`); Android would need an SMS export app.
   - The landing page must say clearly: "Making a wrap needs a Mac with Messages in iCloud turned on. Viewing works anywhere."
 
-## Build order (one commit each)
+## Build order (the original plan, one commit each)
+
+Items 1–8 and 10 were built in this repo. Item 9 moved to the full product (wrapped.smitpatel.xyz). Item 10 is the README's "How I built it" section.
 
 1. Scaffold: TS config, vitest, typecheck, .gitignore
 2. Fake database generator

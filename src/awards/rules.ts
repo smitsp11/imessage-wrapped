@@ -70,6 +70,7 @@ const RULES: Rule[] = [
     label: (v) => `started ${v} conversations`,
   },
   {
+    // Laughs per message; percent() shows it ×100, which reads as "laughs per 100 messages".
     id: 'comedian', title: 'The Comedian', pick: 'max',
     raw: (p, s) => (s.reactions.laughsReceivedByPerson[p] ?? 0) / (s.volume.byPerson[p] as number),
     threshold: () => COMEDIAN_MIN_PER_100 / 100, display: percent,
@@ -91,6 +92,7 @@ const RULES: Rule[] = [
     label: (v) => `${v} double texts`,
   },
   {
+    // n = people with enough messages to qualify, not the whole group, so a near-silent member can't be The Lurker.
     id: 'lurker', title: 'The Lurker', pick: 'min', minPeople: 3, groupOnly: true,
     raw: share, threshold: (n) => LURKER_MAX_OF_EVEN_SPLIT / n, display: percent,
     label: (v) => `only ${v}% of messages`,

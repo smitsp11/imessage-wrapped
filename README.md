@@ -8,23 +8,16 @@ Pick a group chat and get a set of story slides: who talks the most, who ghosts,
 
 Everything runs on your Mac. Nothing is uploaded, and the tool itself uses no AI models: every slide is a number counted from your messages.
 
-![Three slides from the demo wrap: who talked the most, the group's vocabulary, and The Ghost award](docs/demo-slides.png)
-
-*From the demo, which uses a made-up group chat.*
-
-## The full product
-
-This repo is the original MVP of iMessage Wrapped: a developer CLI and a slide viewer. The product
-grew from it and lives at **[wrapped.smitpatel.xyz](https://wrapped.smitpatel.xyz)**
-([source: smitsp11/wrapped](https://github.com/smitsp11/wrapped)). It has a one-line install for
-any Mac, a page on your Mac where you pick a chat and send the link to the group in one tap, and
-more slides: peak month, texting styles, greatest hits with the conversation around them, and a
-summary card. This repo stays as the MVP; new work happens there.
-
 There are two kinds of wrap:
 
 - **Group wrap:** one group chat, with stats and awards for everyone in it.
 - **Solo wrap:** your year across all your chats.
+
+![Three slides from the demo wrap: who talked the most, the group's vocabulary, and The Ghost award](docs/demo-slides.png)
+
+*From the demo, which uses a made-up group chat.*
+
+This repo is the original MVP. The full product grew from it: [wrapped.smitpatel.xyz](https://wrapped.smitpatel.xyz) (see [The full product](#the-full-product)).
 
 ## Try the demo
 
@@ -135,7 +128,7 @@ Each award comes from one number. To keep it fair:
 | Hype Man | the most reactions given | 3 |
 | Night Owl | the biggest share of messages sent 12–5 AM | 10% |
 | Double Texter | the most double texts | 3 |
-| The Lurker | the smallest share of messages | under half of an even share, in a group of 3 or more |
+| The Lurker | the smallest share of messages | under half of an even share, among 3 or more people with 50+ messages |
 
 Solo wraps don't give Main Character or The Lurker.
 
@@ -154,6 +147,10 @@ Solo wraps don't give Main Character or The Lurker.
 - In group chats with Android members, some carriers may cut very long links.
 - In languages written without spaces (Chinese, Japanese, Thai), whole phrases count as one word.
 
+## The full product
+
+This repo is the original MVP. The product grew from it and lives at **[wrapped.smitpatel.xyz](https://wrapped.smitpatel.xyz)** ([source: smitsp11/wrapped](https://github.com/smitsp11/wrapped)), with a one-line install for any Mac, one-tap sending to the group and more slides. This repo stays as the MVP; new work happens there.
+
 ## Development
 
 ```bash
@@ -163,7 +160,7 @@ npx playwright install chromium   # once
 npm run e2e                       # browser tests, desktop and phone sizes
 ```
 
-The tests use a generated fake Messages database with a scripted group chat whose answers are known in advance (for example, Jordan always joins the evening's conversation 5h 14m after it starts). No real messages are in this repo. Any command accepts `--db <path>` to read a different database file.
+The tests use a generated fake Messages database with a scripted group chat whose answers are known in advance (for example, Jordan always joins the evening's conversation 5h 14m after it starts). No real messages are in this repo. `list`, `group` and `me` accept `--db <path>` to read a different database file.
 
 | Folder | What it does |
 |---|---|

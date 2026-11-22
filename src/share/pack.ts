@@ -14,7 +14,7 @@ export async function packWrap(wrap: Wrap): Promise<string> {
 /** Anything after the "#" is untrusted: check size and characters, then the shape of the data. */
 export async function unpackWrap(packed: string): Promise<Wrap> {
   const link = packed.replace(/\s+/g, '')
-  // The length cap also caps inflation: deflate expands at most ~1032:1, so at most ~8 MB comes out.
+  // The length cap also caps inflation: deflate expands at most ~1032:1, so at most ~6 MB comes out (8192 chars ≈ 6 KB of bytes).
   if (link.length === 0 || link.length > MAX_LINK_CHARS || !/^[A-Za-z0-9_-]+$/.test(link)) throw new BrokenLinkError()
   let value: unknown
   try {
